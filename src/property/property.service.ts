@@ -536,8 +536,11 @@ export class PropertyService {
       radiusInKm,
       radiusInMiles,
       city,
+      county,
       state,
       country,
+      postalCode,
+      postalCodeSuffix,
       boundingBox 
     } = filter.location;
 
@@ -552,6 +555,20 @@ export class PropertyService {
     if (country) {
       qb.andWhere('location.country = :country', { country });
     }
+
+    if (postalCode) {
+      qb.andWhere('location.postalCode = :postalCode', { postalCode });
+
+      // only check if postalCodeSuffix if postalCode is provided
+      if (postalCodeSuffix) {
+        qb.andWhere('location.postalCodeSuffix = :postalCodeSuffix', { postalCodeSuffix });
+      }
+    }
+
+    if (county) {
+      qb.andWhere('location.county = :county', { county });
+    }
+    
 
     // Radius search
     if (latitude && longitude && (radiusInKm || radiusInMiles)) {
