@@ -7,6 +7,7 @@ CREATE TYPE availability_status AS ENUM ('AVAILABLE', 'BOOKED', 'UNAVAILABLE');
 CREATE TYPE organization_type AS ENUM ('COMPANY', 'SOLE_PROPRIETORSHIP', 'PARTNERSHIP', 'OTHER');
 CREATE TYPE maintenance_request_status AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
 CREATE TYPE maintenance_request_urgency AS ENUM ('LOW', 'MEDIUM', 'HIGH');
+CREATE TYPE organization_role AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
 
 -- Users Table
 CREATE TABLE users (
@@ -168,7 +169,7 @@ CREATE TABLE organization_members (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id),
     user_id UUID NOT NULL REFERENCES users(id),
-    role VARCHAR(50) NOT NULL,  -- OWNER, ADMIN, MEMBER, etc.
+    role organization_role NOT NULL,  -- OWNER, ADMIN, MEMBER, etc.
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(organization_id, user_id)
