@@ -15,7 +15,16 @@ export class Location {
   address: string;
 
   @Column()
+  postalCode: string;
+
+  @Column()
+  postalCodeSuffix: string;
+
+  @Column()
   city: string;
+
+  @Column()
+  county: string;
 
   @Column()
   state: string;
