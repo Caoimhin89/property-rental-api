@@ -134,7 +134,10 @@ export class CreatePropertyInput {
 
 export class CreateLocationInput {
     address: string;
+    postalCode: string;
+    postalCodeSuffix?: Nullable<string>;
     city: string;
+    county?: Nullable<string>;
     state: string;
     country: string;
     latitude: number;
@@ -251,10 +254,12 @@ export class LocationFilter {
     maxDistance?: Nullable<number>;
     radiusInKm?: Nullable<number>;
     radiusInMiles?: Nullable<number>;
+    postalCode?: Nullable<string>;
+    postalCodeSuffix?: Nullable<string>;
     city?: Nullable<string>;
+    county?: Nullable<string>;
     state?: Nullable<string>;
     country?: Nullable<string>;
-    postalCode?: Nullable<string>;
     boundingBox?: Nullable<BoundingBoxInput>;
 }
 
@@ -607,8 +612,12 @@ export class ImageEdge {
 
 export class Location {
     __typename?: 'Location';
+    id: string;
     address?: Nullable<string>;
+    postalCode?: Nullable<string>;
+    postalCodeSuffix?: Nullable<string>;
     city?: Nullable<string>;
+    county?: Nullable<string>;
     state?: Nullable<string>;
     country?: Nullable<string>;
     coordinates: Coordinates;
