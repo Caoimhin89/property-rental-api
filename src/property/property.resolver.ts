@@ -1,0 +1,123 @@
+import { Args, Query, Resolver, ResolveField, Parent, Mutation } from '@nestjs/graphql';
+import { PropertyService } from './property.service';
+import { DataLoaderService } from '../data-loader/data-loader.service';
+import { CreatePropertyInput, Property, PropertyConnection, PropertyFilter, Location, PaginationInput, ImageConnection } from '../graphql';
+import { Property as PropertyEntity } from './entities/property.entity';
+import { BookingService } from '../booking/booking.service';
+import { LocationService } from '../location/location.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UseGuards } from '@nestjs/common';
+
+@Resolver(() => Property)
+export class PropertyResolver {
+  constructor(
+    private readonly propertyService: PropertyService,
+    private readonly dataLoader: DataLoaderService,
+    private readonly bookingService: BookingService,
+    private readonly locationService: LocationService
+  ) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Property)
+  async createProperty(@Args('input') input: CreatePropertyInput) {
+    return await this.propertyService.create(input);
+  }
+
+  @Query(() => Property, { nullable: true })
+  async propertyById(@Args('id') id: string) {
+    return await this.propertyService.findById(id) as PropertyEntity | null;
+  }
+
+  @ResolveField()
+  async amenities(@Parent() property: Property) {
+    return this.dataLoader.amenitiesLoader.load(property.id);
+  }
+
+  @ResolveField(() => ImageConnection)
+  async images(
+    @Parent() property: PropertyEntity,
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput
+  ): Promise<ImageConnection> {
+    return this.dataLoader.propertyImagesLoader.load(property.id, pagination);
+  }
+
+  @ResolveField()
+  async reviews(@Parent() property: Property) {
+    return this.dataLoader.reviewsLoader.load(property.id);
+  }
+
+  @ResolveField(() => Location)
+  async location(@Parent() property: PropertyEntity) {
+    console.log('Location field resolver called for property:', property.id);
+    const location = await this.locationService.findByPropertyId(property.id);
+    if (!location) {
+      throw new Error(`Location not found for property ${property.id}`);
+    }
+    return location;
+  }
+
+  @Query(() => PropertyConnection, { nullable: true })
+  async properties(
+    @Args('filter', { nullable: true }) filter?: PropertyFilter,
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput,
+  ) {
+    const connection = await this.propertyService.findAll({
+      filter,
+      pagination
+    });
+    
+    return {
+      ...connection,
+      edges: connection.edges.map(edge => ({
+        ...edge,
+        node: this.propertyService.toGraphQL(edge.node)
+      }))
+    };
+  }
+
+  @ResolveField()
+  async isAvailable(
+    @Parent() property: Property,
+    @Args('startDate') startDate: Date,
+    @Args('endDate') endDate: Date
+  ): Promise<boolean> {
+    // Check for bookings in date range
+    const hasBookings = await this.bookingService.hasBookingsInRange(
+      property.id,
+      startDate,
+      endDate
+    );
+
+    // Check for blocked dates in range
+    const hasBlockedDates = await this.propertyService.hasBlockedDatesInRange(
+      property.id,
+      startDate,
+      endDate
+    );
+
+    return !hasBookings && !hasBlockedDates;
+  }
+
+  @ResolveField()
+  async priceForDates(
+    @Parent() property: Property,
+    @Args('startDate') startDate: Date,
+    @Args('endDate') endDate: Date
+  ): Promise<number> {
+    return this.propertyService.calculateTotalPrice(
+      property.id,
+      startDate,
+      endDate
+    );
+  }
+
+  @ResolveField()
+  async blockedDates(@Parent() property: Property) {
+    return this.propertyService.getBlockedDates(property.id);
+  }
+
+  @ResolveField()
+  async priceRules(@Parent() property: Property) {
+    return this.propertyService.getPriceRules(property.id);
+  }
+} 

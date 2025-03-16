@@ -1,0 +1,201 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { MaintenanceRequest, MaintenanceRequestStatus } from './entities/maintenance-request.entity';
+import { MaintenanceComment } from './entities/maintenance-comment.entity';
+import { MaintenanceImage } from './entities/maintenance-image.entity';
+import { PropertyService } from '../property/property.service';
+import { UserService } from '../user/user.service';
+import { LoggerService } from '../common/services/logger.service';
+import {
+    PaginationInput,
+    CreateMaintenanceCommentInput,
+    CreateMaintenanceImageInput,
+    CreateMaintenanceRequestInput,
+    UpdateMaintenanceRequestInput
+} from '../graphql';
+import { Connection } from '../common/types/types';
+import { buildPaginatedResponse } from '../common/utils';
+import { Property as PropertyEntity } from 'property/entities/property.entity';
+import { User as UserEntity } from 'user/entities/user.entity';
+
+@Injectable()
+export class MaintenanceService {
+  constructor(
+    @InjectRepository(MaintenanceRequest)
+    private maintenanceRequestRepository: Repository<MaintenanceRequest>,
+    @InjectRepository(MaintenanceComment)
+    private maintenanceCommentRepository: Repository<MaintenanceComment>,
+    @InjectRepository(MaintenanceImage)
+    private maintenanceImageRepository: Repository<MaintenanceImage>,
+    private propertyService: PropertyService,
+    private userService: UserService,
+    private logger: LoggerService
+  ) {}
+
+  async findById(id: string): Promise<MaintenanceRequest> {
+    const request = await this.maintenanceRequestRepository.findOne({ where: { id } });
+    if (!request) {
+      throw new NotFoundException(`Maintenance request with ID ${id} not found`);
+    }
+    return request;
+  }
+
+  async findByUserId(userId: string, pagination?: PaginationInput): Promise<Connection<MaintenanceRequest>> {
+    this.logger.debug('repository', 'MaintenanceService', 'FindByUserId');
+    const query = this.maintenanceRequestRepository.createQueryBuilder('request')
+      .where('request.userId = :userId', { userId });
+
+      const [users, totalCount] = await query.getManyAndCount();
+
+    return buildPaginatedResponse(
+      users,
+      totalCount,
+      pagination?.first || 10,
+      (item) => Buffer.from(item.createdAt.toISOString()).toString('base64')
+    );
+  }
+
+  async findAll({ propertyId, status, pagination }: {
+    propertyId?: string;
+    status?: string;
+    pagination?: PaginationInput;
+  }): Promise<Connection<MaintenanceRequest>> {
+    this.logger.debug('repository', 'MaintenanceService', 'FindAll');
+    const query = this.maintenanceRequestRepository.createQueryBuilder('request');
+
+    if (propertyId) {
+      query.andWhere('request.propertyId = :propertyId', { propertyId });
+    }
+
+    if (status) {
+      query.andWhere('request.status = :status', { status });
+    }
+
+    if (pagination?.after) {
+      query.andWhere('request.createdAt < :after', { 
+        after: new Date(Buffer.from(pagination.after, 'base64').toString()) 
+      });
+    }
+
+    query.orderBy('request.createdAt', 'DESC');
+
+    const limit = (pagination?.first || 10) + 1;
+    query.take(limit);
+
+    const [items, totalCount] = await query.getManyAndCount();
+
+    return buildPaginatedResponse(
+      items,
+      totalCount,
+      pagination?.first || 10,
+      (item) => Buffer.from(item.createdAt.toISOString()).toString('base64')
+    );
+  }
+
+  async create(input: CreateMaintenanceRequestInput): Promise<MaintenanceRequest> {
+    const request = this.maintenanceRequestRepository.create({
+      ...input,
+      status: MaintenanceRequestStatus.PENDING
+    });
+    const savedRequest = await this.maintenanceRequestRepository.save(request);
+    return {
+        id: savedRequest.id,
+        propertyId: savedRequest.propertyId,
+        userId: savedRequest.userId,
+        urgency: savedRequest.urgency,
+        description: savedRequest.description,
+        status: savedRequest.status,
+        comments: [],
+        photos: [],
+        property: null as unknown as PropertyEntity,
+        user: null as unknown as UserEntity,
+        createdAt: savedRequest.createdAt,
+        updatedAt: savedRequest.updatedAt
+    };
+  }
+
+  async update(id: string, input: UpdateMaintenanceRequestInput): Promise<MaintenanceRequest> {
+    const request = await this.findById(id);
+    Object.assign(request, input);
+    return this.maintenanceRequestRepository.save(request);
+  }
+
+  async addComment(input: CreateMaintenanceCommentInput): Promise<MaintenanceComment> {
+    const request = await this.findById(input.maintenanceRequestId);
+    const comment = this.maintenanceCommentRepository.create(input);
+    return this.maintenanceCommentRepository.save(comment);
+  }
+
+  async addImage(input: CreateMaintenanceImageInput): Promise<MaintenanceImage> {
+    const request = await this.findById(input.maintenanceRequestId);
+    const image = this.maintenanceImageRepository.create(input);
+    return this.maintenanceImageRepository.save(image);
+  }
+
+  async getProperty(propertyId: string) {
+    return this.propertyService.findById(propertyId);
+  }
+
+  async getUser(userId: string) {
+    return this.userService.findById(userId);
+  }
+
+  async findCommentsByRequestId(requestId: string, pagination?: PaginationInput): Promise<Connection<MaintenanceComment>> {
+    const query = this.maintenanceCommentRepository.createQueryBuilder('comment')
+      .where('comment.maintenanceRequestId = :requestId', { requestId });
+
+    if (pagination?.after) {
+      query.andWhere('comment.createdAt < :after', {
+        after: new Date(Buffer.from(pagination.after, 'base64').toString())
+      });
+    }
+
+    query.orderBy('comment.createdAt', 'DESC');
+
+    const limit = (pagination?.first || 10) + 1;
+    query.take(limit);
+
+    const [items, totalCount] = await query.getManyAndCount();
+
+    return buildPaginatedResponse(
+      items,
+      totalCount,
+      pagination?.first || 10,
+      (item) => Buffer.from(item.createdAt.toISOString()).toString('base64')
+    );
+  }
+
+  async findImagesByRequestId(requestId: string, pagination?: PaginationInput): Promise<Connection<MaintenanceImage>> {
+    const query = this.maintenanceImageRepository.createQueryBuilder('image')
+      .where('image.maintenanceRequestId = :requestId', { requestId });
+
+    if (pagination?.after) {
+      query.andWhere('image.createdAt < :after', {
+        after: new Date(Buffer.from(pagination.after, 'base64').toString())
+      });
+    }
+
+    query.orderBy('image.createdAt', 'DESC');
+
+    const limit = (pagination?.first || 10) + 1;
+    query.take(limit);
+
+    const [items, totalCount] = await query.getManyAndCount();
+
+    return buildPaginatedResponse(
+      items,
+      totalCount,
+      pagination?.first || 10,
+      (item) => Buffer.from(item.createdAt.toISOString()).toString('base64')
+    );
+  }
+
+  async getComments(requestId: string, pagination?: PaginationInput): Promise<Connection<MaintenanceComment>> {
+    return this.findCommentsByRequestId(requestId, pagination);
+  }
+
+  async getImages(requestId: string, pagination?: PaginationInput): Promise<Connection<MaintenanceImage>> {
+    return this.findImagesByRequestId(requestId, pagination);
+  }
+}

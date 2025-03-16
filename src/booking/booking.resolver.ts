@@ -1,0 +1,62 @@
+import { Args, Mutation, Query, Resolver, ResolveField, Parent } from '@nestjs/graphql';
+import { BookingService } from './booking.service';
+import {
+  BookingConnection,
+  CreateBookingInput,
+  BookingResponse,
+  Booking as BookingType } from '../graphql';
+import { Booking as BookingEntity } from './entities/booking.entity';
+import { DataLoaderService } from '../data-loader/data-loader.service';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { User } from 'user/entities/user.entity';
+import { CurrentUser } from 'auth/current-user.decorator';
+
+@Resolver(BookingType)
+export class BookingResolver {
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly dataLoader: DataLoaderService
+  ) {}
+
+  @ResolveField()
+  property(@Parent() booking: BookingEntity) {
+    return this.dataLoader.propertiesLoader.load(booking.propertyId);
+  }
+
+  @ResolveField()
+  user(@Parent() booking: BookingEntity) {
+    return this.dataLoader.usersLoader.load(booking.userId);
+  }
+
+  @Query(() => BookingType, { nullable: true })
+  async booking(@Args('id') id: string): Promise<BookingEntity | null> {
+    return this.bookingService.findOne(id);
+  }
+
+  @Query(() => BookingConnection, { nullable: true })
+  async bookings(
+    @Args('after') after: string,
+    @Args('before') before: string,
+    @Args('first') first: number,
+    @Args('last') last: number,
+  ): Promise<BookingConnection> {
+    return this.bookingService.findAllBookings(after, before, first, last);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => BookingResponse, { nullable: true })
+  async createBooking(
+    @Args('propertyId') propertyId: string,
+    @Args('input') input: CreateBookingInput,
+    @CurrentUser() user: User
+  ): Promise<BookingResponse> {
+    console.log('user', user);
+    console.log('input', input);
+    if (!input.userId) {
+      input.userId = user.id;
+    }
+    console.log('input_after', input);
+    return this.bookingService.createBooking(propertyId, input);
+  }
+} 

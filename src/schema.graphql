@@ -1,0 +1,777 @@
+enum AreaUnit {
+  SQUARE_METERS
+  SQUARE_FEET
+  ACRES
+}
+
+type AuthResponse {
+  accessToken: String!
+  refreshToken: String!
+  user: User!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input SignupInput {
+  email: String!
+  password: String!
+  name: String!
+}
+
+input CreateOrganizationInput {
+  name: String!
+  organizationType: OrganizationType!
+  primaryUserId: ID
+}
+
+input UpdateOrganizationInput {
+  name: String
+  organizationType: OrganizationType
+}
+
+input CreateUserInput {
+  email: String!
+  password: String!
+  name: String!
+}
+
+input CreatePropertyInput {
+  name: String!
+  description: String
+  maxOccupancy: Int!
+  propertyType: PropertyType!
+  basePrice: Float!
+  numBathrooms: Float!
+  numBedrooms: Int!
+  numStories: Int!
+  garageSpaces: Int!
+  yearBuilt: Int
+  area: Float!
+  areaUnit: AreaUnit!
+  lotSize: Float!
+  lotSizeUnit: AreaUnit!
+  organizationId: ID!
+  location: CreateLocationInput!
+  amenities: [CreateAmenityInput!]
+  images: [CreateImageInput!]
+}
+
+input CreateLocationInput {
+  address: String!
+  city: String!
+  state: String!
+  country: String!
+  latitude: Float!
+  longitude: Float!
+}
+
+input CreateNearbyPlaceInput {
+  name: String!
+  type: String!
+  distance: Float!
+  propertyId: ID!
+}
+
+input CreateAmenityInput {
+  name: String!
+  category: String
+  icon: String
+  iconUrl: String
+}
+
+input CreateImageInput {
+  url: String!
+  caption: String
+  propertyId: ID!
+}
+
+input CreateReviewInput {
+  rating: Float!
+  text: String
+}
+
+input CreateBookingInput {
+  userId: ID
+  startDate: DateTime!
+  endDate: DateTime!
+  numberOfGuests: Int!
+}
+
+input CreateBlockedDateInput {
+  startDate: DateTime!
+  endDate: DateTime!
+  reason: String
+}
+
+input CreatePriceRuleInput {
+  startDate: DateTime!
+  endDate: DateTime!
+  price: Float!
+  description: String
+}
+
+input UpdateAmenityInput {
+  name: String
+  category: String
+  icon: String
+  iconUrl: String
+}
+
+type Mutation {
+  ## Auth Mutations
+  login(input: LoginInput!): AuthResponse!
+  signup(input: SignupInput!): AuthResponse!
+  refreshToken(token: String!): AuthResponse!
+
+  ## User Mutations
+  createUser(input: CreateUserInput!): User!
+  removeUser(id: ID!): Boolean!
+
+  ## Property Mutations
+  createProperty(input: CreatePropertyInput!): Property!
+  removeProperty(id: ID!): Boolean!
+  blockDates(propertyId: ID!, input: CreateBlockedDateInput!): BlockedDate!
+  setPriceRule(propertyId: ID!, input: CreatePriceRuleInput!): PriceRule!
+
+  ## Location Mutations
+  createLocation(input: CreateLocationInput!): Location!
+  removeLocation(id: ID!): Boolean!
+
+  ## Nearby Place Mutations
+  createNearbyPlace(input: CreateNearbyPlaceInput!): NearbyPlace!
+  removeNearbyPlace(id: ID!): Boolean!
+
+  ## Amenity Mutations
+  createAmenity(input: CreateAmenityInput!): Amenity!
+  removeAmenity(id: ID!): Boolean!
+  updateAmenity(id: ID!, input: UpdateAmenityInput!): Amenity!
+  addAmenityToProperty(propertyId: ID!, amenityId: ID!): Property!
+  removeAmenityFromProperty(propertyId: ID!, amenityId: ID!): Property!
+
+  ## Image Mutations
+  createImage(input: CreateImageInput!): Image!
+  removeImage(id: ID!): Boolean!
+
+  ## Review Mutations
+  addReview(propertyId: ID!, input: CreateReviewInput!): Review!
+
+  ## Booking Mutations
+  createBooking(propertyId: ID!, input: CreateBookingInput!): BookingResponse!
+
+  ## Organization Mutations
+  createOrganization(input: CreateOrganizationInput!): Organization!
+  updateOrganization(id: ID!, input: UpdateOrganizationInput!): Organization!
+  addOrganizationMember(organizationId: ID!, userId: ID!, role: OrganizationRole!): OrganizationMember!
+  removeOrganizationMember(organizationId: ID!, userId: ID!): Boolean!
+  updateOrganizationMemberRole(organizationId: ID!, userId: ID!, role: OrganizationRole!): OrganizationMember!
+
+  ## Maintenance Request Mutations
+  createMaintenanceRequest(input: CreateMaintenanceRequestInput!): MaintenanceRequest!
+  updateMaintenanceRequest(id: ID!, input: UpdateMaintenanceRequestInput!): MaintenanceRequest!
+  addMaintenanceComment(input: CreateMaintenanceCommentInput!): MaintenanceComment!
+  addMaintenanceImage(input: CreateMaintenanceImageInput!): MaintenanceImage!
+}
+
+# Query Types
+type Query {
+  propertyById(id: ID!): Property
+  properties(
+    filter: PropertyFilter,
+    pagination: PaginationInput
+  ): PropertyConnection
+  propertyAmenities(propertyId: ID!): [Amenity!]!
+  propertyImages(propertyId: ID!): ImageConnection!
+  propertyLocation(propertyId: ID!): Location
+  propertyReviews(
+    propertyId: ID!,
+    pagination: PaginationInput
+  ): ReviewConnection
+  booking(id: ID!): Booking
+  bookings(
+    pagination: PaginationInput
+  ): BookingConnection!
+  organization(id: ID!): Organization!
+  organizations(
+    filter: OrganizationFilter,
+    pagination: PaginationInput
+  ): OrganizationConnection!
+  myOrganizations: [Organization!]!
+  image(id: ID!): Image
+  images(
+    pagination: PaginationInput
+  ): ImageConnection!
+  amenity(id: ID!): Amenity
+  amenities(pagination: PaginationInput): AmenityConnection!
+  user(id: ID!): User
+  users(pagination: PaginationInput): UserConnection!
+  maintenanceRequest(id: ID!): MaintenanceRequest
+  maintenanceRequests(
+    propertyId: ID
+    status: MaintenanceRequestStatus
+    pagination: PaginationInput
+  ): MaintenanceRequestConnection!
+}
+
+# Scalar Types
+scalar DateTime
+scalar Money
+
+# Enum Types
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  CONDO
+  VILLA
+  OTHER
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BOOKED
+  UNAVAILABLE
+}
+
+enum OrganizationType {
+  COMPANY
+  SOLE_PROPRIETORSHIP
+  PARTNERSHIP
+  OTHER
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MaintenanceRequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MaintenanceRequestUrgency {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+# Connection Types
+type Property {
+  id: ID!
+  name: String!
+  description: String
+  propertyType: PropertyType!
+  basePrice: Float!
+  maxOccupancy: Int!
+  numStories: Int!
+  numBathrooms: Float!
+  numBedrooms: Int!
+  garageSpaces: Int!
+  yearBuilt: Int
+  areaInSquareMeters: Float!
+  lotSizeInSquareMeters: Float!
+  organization: Organization!
+  location: Location!
+  amenities: [Amenity!]!
+  images(pagination: PaginationInput): ImageConnection
+  reviews(pagination: PaginationInput): ReviewConnection
+  blockedDates: [BlockedDate!]!
+  priceRules: [PriceRule!]!
+  maintenanceRequests(
+    status: MaintenanceRequestStatus
+    pagination: PaginationInput
+  ): MaintenanceRequestConnection!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  # Calculate these based on date range query
+  isAvailable(startDate: DateTime!, endDate: DateTime!): Boolean!
+  priceForDates(startDate: DateTime!, endDate: DateTime!): Float!
+}
+
+type PropertyConnection {
+  edges: [PropertyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type PropertyEdge {
+  cursor: String!
+  node: Property!
+}
+
+type MaintenanceRequest {
+  id: ID!
+  property: Property!
+  user: User!
+  urgency: MaintenanceRequestUrgency!
+  description: String!
+  status: MaintenanceRequestStatus!
+  comments: MaintenanceCommentConnection!
+  photos: MaintenanceImageConnection!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type MaintenanceRequestConnection {
+  edges: [MaintenanceRequestEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type MaintenanceRequestEdge {
+  cursor: String!
+  node: MaintenanceRequest!
+}
+
+input CreateMaintenanceRequestInput {
+  propertyId: ID!
+  urgency: MaintenanceRequestUrgency!
+  description: String!
+}
+
+input UpdateMaintenanceRequestInput {
+  urgency: MaintenanceRequestUrgency
+  description: String
+  status: MaintenanceRequestStatus
+}
+
+input CreateMaintenanceCommentInput {
+  maintenanceRequestId: ID!
+  comment: String!
+}
+
+input CreateMaintenanceImageInput {
+  maintenanceRequestId: ID!
+  url: String!
+}
+
+type MaintenanceComment {
+  id: ID!
+  maintenanceRequest: MaintenanceRequest!
+  user: User!
+  comment: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type MaintenanceCommentConnection {
+  edges: [MaintenanceCommentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type MaintenanceCommentEdge {
+  cursor: String!
+  node: MaintenanceComment!
+}
+
+type MaintenanceImage {
+  id: ID!
+  maintenanceRequest: MaintenanceRequest!
+  url: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type MaintenanceImageConnection {
+  edges: [MaintenanceImageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type MaintenanceImageEdge {
+  cursor: String!
+  node: MaintenanceImage!
+}
+
+type Price {
+  id: ID!
+  propertyId: ID!
+  amount: Money!
+  currency: String!
+}
+
+type Amenity {
+  id: ID!
+  name: String!
+  category: String
+  icon: String
+  iconUrl: String
+  properties: [Property!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AmenityConnection {
+  edges: [AmenityEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AmenityEdge {
+  cursor: String!
+  node: Amenity!
+}
+
+type Image {
+  id: ID!
+  url: String!
+  caption: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ImageConnection {
+  edges: [ImageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ImageEdge {
+  cursor: String!
+  node: Image!
+}
+
+type Location {
+  address: String
+  city: String
+  state: String
+  country: String
+  coordinates: Coordinates!
+  nearbyPlaces: [NearbyPlace!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Coordinates {
+  latitude: Float!
+  longitude: Float!
+}
+
+type NearbyPlace {
+  name: String!
+  type: String!
+  distance: Float! # in kilometers
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type NearbyPlaceConnection {
+  edges: [NearbyPlaceEdge]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type NearbyPlaceEdge {
+  cursor: String!
+  node: NearbyPlace!
+}
+
+type Review {
+  id: ID!
+  rating: Float!
+  text: String
+  user: User!
+  property: Property!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ReviewConnection {
+  edges: [ReviewEdge]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ReviewEdge {
+  cursor: String!
+  node: Review!
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  avatar: String
+  bookings(pagination: PaginationInput): BookingConnection!
+  maintenanceRequests(
+    status: MaintenanceRequestStatus
+    pagination: PaginationInput
+  ): MaintenanceRequestConnection!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type UserEdge {
+  cursor: String!
+  node: User!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Booking {
+  id: ID!
+  confirmationCode: String!
+  property: Property!
+  user: User!
+  startDate: DateTime!
+  endDate: DateTime!
+  numberOfGuests: Int!
+  totalPrice: Money!
+  status: BookingStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REJECTED
+}
+
+type BookingConnection {
+  edges: [BookingEdge]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type BookingEdge {
+  node: Booking!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# Input Types
+input PropertyFilter {
+  # Basic filters
+  propertyType: [PropertyType!]  # Allow multiple types
+  
+  # Price filtering
+  price: PriceFilter
+  
+  # Size and capacity filters
+  maxOccupancy: Int
+  numBedrooms: IntRangeFilter
+  numBathrooms: FloatRangeFilter
+  numStories: IntRangeFilter
+  garageSpaces: IntRangeFilter
+  
+  # Area filters
+  area: AreaFilter
+  lotSize: AreaFilter
+  
+  # Year built filter
+  yearBuilt: YearBuiltFilter
+  
+  # Location based filtering
+  location: LocationFilter
+  
+  # Amenities filtering
+  amenities: AmenitiesFilter
+  
+  # Keywords search
+  searchTerm: String        # Search in name, description
+  
+  # Date based filters
+  createdAfter: DateTime
+  createdBefore: DateTime
+  updatedAfter: DateTime
+  updatedBefore: DateTime
+  
+  # Availability filters
+  availability: DateRangeInput
+  
+  # Organization/Owner filters
+  organizationIds: [ID!]
+  
+  # Sorting
+  sort: [PropertySort!]
+}
+
+input PaginationInput {
+  after: String
+  before: String
+  first: Int
+  last: Int
+}
+
+input LocationFilter {
+  latitude: Float
+  longitude: Float
+  maxDistance: Float
+  radiusInKm: Float
+  radiusInMiles: Float
+  city: String
+  state: String
+  country: String
+  postalCode: String
+  boundingBox: BoundingBoxInput
+}
+
+input AmenityFilter {
+  name: String
+}
+
+input DateRangeInput {
+  startDate: DateTime!
+  endDate: DateTime!
+}
+
+type BookingResponse {
+  success: Boolean!
+  message: String
+  bookingId: ID
+  confirmationCode: String
+}
+
+type BlockedDate {
+  id: ID!
+  propertyId: ID!
+  startDate: DateTime!
+  endDate: DateTime!
+  reason: String
+}
+
+type PriceRule {
+  id: ID!
+  propertyId: ID!
+  startDate: DateTime!
+  endDate: DateTime!
+  price: Float!
+  description: String
+}
+
+type Organization {
+  id: ID!
+  name: String!
+  organizationType: OrganizationType!
+  primaryUser: User
+  members: [OrganizationMember!]!
+  properties: PropertyConnection!
+  createdAt: DateTime!
+}
+
+type OrganizationConnection {
+  edges: [OrganizationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type OrganizationEdge {
+  cursor: String!
+  node: Organization!
+}
+
+input OrganizationFilter {
+  type: OrganizationType
+  search: String
+}
+
+type OrganizationMember {
+  id: ID!
+  organization: Organization!
+  user: User!
+  role: OrganizationRole!
+  createdAt: DateTime!
+}
+
+type OrganizationMemberConnection {
+  edges: [OrganizationMemberEdge]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type OrganizationMemberEdge {
+  cursor: String!
+  node: OrganizationMember!
+}
+
+# Enums for various filters
+enum YearBuiltOperator {
+  EQUALS
+  GREATER_THAN
+  LESS_THAN
+  BETWEEN
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+enum PropertySortField {
+  PRICE
+  CREATED_AT
+  YEAR_BUILT
+  AREA
+  LOT_SIZE
+  NUM_BEDROOMS
+  NUM_BATHROOMS
+}
+
+# Input types for specific filters
+input YearBuiltFilter {
+  operator: YearBuiltOperator!
+  value: Int
+  minValue: Int
+  maxValue: Int
+}
+
+input PriceFilter {
+  min: Float
+  max: Float
+  currency: String
+}
+
+input AmenitiesFilter {
+  includeAll: [String!]  # Property must have ALL of these amenities
+  includeAny: [String!]  # Property must have ANY of these amenities
+  exclude: [String!]     # Property must NOT have these amenities
+}
+
+input PropertySort {
+  field: PropertySortField!
+  order: SortOrder!
+}
+
+# Supporting input types
+input IntRangeFilter {
+  equals: Int
+  min: Int
+  max: Int
+}
+
+input FloatRangeFilter {
+  equals: Float
+  min: Float
+  max: Float
+}
+
+input AreaFilter {
+  min: Float
+  max: Float
+  unit: AreaUnit!
+}
+
+input BoundingBoxInput {
+  southWestLat: Float!
+  southWestLng: Float!
+  northEastLat: Float!
+  northEastLng: Float!
+}

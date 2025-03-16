@@ -1,0 +1,125 @@
+{
+  "info": {
+    "name": "Property Rental API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Properties",
+      "item": [
+        {
+          "name": "Get All Properties",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  properties {\n    id\n    name\n    description\n    propertyType\n    price\n    images {\n      url\n      caption\n    }\n    amenities {\n      name\n      category\n    }\n  }\n}",
+                "variables": {}
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Property by ID",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query($id: ID!) {\n  property(id: $id) {\n    id\n    name\n    description\n    propertyType\n    price\n    images {\n      url\n      caption\n    }\n    reviews {\n      rating\n      text\n      user {\n        name\n      }\n    }\n  }\n}",
+                "variables": {
+                  "id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation($email: String!, $password: String!) {\n  login(email: $email, password: $password) {\n    token\n    user {\n      id\n      name\n      email\n    }\n  }\n}",
+                "variables": {
+                  "email": "john@example.com",
+                  "password": "password123"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation($propertyId: ID!, $startDate: String!, $endDate: String!, $guests: Int!) {\n  createBooking(input: {\n    propertyId: $propertyId,\n    startDate: $startDate,\n    endDate: $endDate,\n    numberOfGuests: $guests\n  }) {\n    id\n    startDate\n    endDate\n    totalPrice\n    property {\n      name\n    }\n  }\n}",
+                "variables": {
+                  "propertyId": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+                  "startDate": "2024-04-01",
+                  "endDate": "2024-04-05",
+                  "guests": 2
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "authToken",
+      "value": "your_jwt_token_here"
+    }
+  ]
+} 
