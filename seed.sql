@@ -31,10 +31,10 @@ INSERT INTO properties (id, name, description, property_type, base_price, max_oc
 ('bcd32b09-b38b-4002-b77d-3726b6be4961', 'Luxury Villa', 'Spectacular villa with ocean view', 'VILLA', 300.00, 6, 'cdd32b09-b38b-4002-b77d-3726b6be4961', 4, 3, 2, 2, 2018, 250, 1500, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Locations
-INSERT INTO locations (id, property_id, address, city, state, country, latitude, longitude, created_at, updated_at) VALUES
-('f49c2006-2bd2-42c3-922b-5d845c91e0a2', 'b5d5c35f-f54f-466f-9456-cb2193d32d23', '123 Beach Road', 'Miami', 'Florida', 'USA', 25.7617, -80.1918, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('d8bf813e-bcea-4755-8eed-c71f9195f446', 'a6d8d8fc-53a7-4ddc-9974-09359b20e187', '456 Main Street', 'New York', 'New York', 'USA', 40.7128, -74.0060, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('14eb162f-4e86-43c3-a8b6-577f9669bed3', 'bcd32b09-b38b-4002-b77d-3726b6be4961', '789 Forest Lane', 'Portland', 'Oregon', 'USA', 45.5155, -122.6789, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO locations (id, property_id, address, postal_code, postal_code_suffix, city, county, state, country, latitude, longitude, created_at, updated_at) VALUES
+('f49c2006-2bd2-42c3-922b-5d845c91e0a2', 'b5d5c35f-f54f-466f-9456-cb2193d32d23', '123 Beach Road', '33131', NULL, 'Miami', 'Miami-Dade', 'Florida', 'USA', 25.7617, -80.1918, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('d8bf813e-bcea-4755-8eed-c71f9195f446', 'a6d8d8fc-53a7-4ddc-9974-09359b20e187', '456 Main Street', '10001', NULL, 'New York', 'Manhattan', 'New York', 'USA', 40.7128, -74.0060, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('14eb162f-4e86-43c3-a8b6-577f9669bed3', 'bcd32b09-b38b-4002-b77d-3726b6be4961', '789 Forest Lane', '97205', NULL, 'Portland', 'Multnomah', 'Oregon', 'USA', 45.5155, -122.6789, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Nearby Places
 INSERT INTO nearby_places (id, location_id, name, type, distance, created_at, updated_at) VALUES
