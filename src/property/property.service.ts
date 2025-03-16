@@ -574,7 +574,7 @@ export class PropertyService {
     if (latitude && longitude && (radiusInKm || radiusInMiles)) {
       let radiusInMeters: number;
       if (radiusInMiles) {
-        radiusInMeters = radiusInMiles * 1.60934 * 1000;
+        radiusInMeters = milesToKilometers(radiusInMiles) * 1000;
       } else if (radiusInKm) {
         radiusInMeters = radiusInKm * 1000;
       } else {
