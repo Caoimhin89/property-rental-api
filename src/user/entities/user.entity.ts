@@ -1,5 +1,6 @@
 import { MaintenanceRequest } from 'maintenance/entities/maintenance-request.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Organization } from 'organization/entities/organization.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne } from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -17,6 +18,9 @@ export class User {
 
   @Column({ nullable: true })
   avatar?: string;
+
+  @ManyToOne(() => Organization, organization => organization.members)
+  organization: Organization;
 
   @OneToMany(() => MaintenanceRequest, request => request.user)
   maintenanceRequests: MaintenanceRequest[];
