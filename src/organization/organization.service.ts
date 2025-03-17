@@ -80,7 +80,6 @@ export class OrganizationService {
   async findById(id: string): Promise<OrganizationEntity> {
     return this.organizationRepository.findOneOrFail({ 
       where: { id },
-      relations: ['primaryUser']
     });
   }
 

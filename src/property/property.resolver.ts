@@ -17,13 +17,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'auth/current-user.decorator';
 import { User } from 'user/entities/user.entity';
+import { OrganizationService } from 'organization/organization.service';
 @Resolver(() => Property)
 export class PropertyResolver {
   constructor(
     private readonly propertyService: PropertyService,
     private readonly dataLoader: DataLoaderService,
     private readonly bookingService: BookingService,
-    private readonly locationService: LocationService
+    private readonly locationService: LocationService,
+    private readonly organizationService: OrganizationService
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -39,9 +41,6 @@ export class PropertyResolver {
     @Args('input') input: UpdatePropertyInput,
     @CurrentUser() user: User
   ) {
-    if (user.organization.id !== input.organizationId) {
-      throw new Error('You are not authorized to update this property');
-    }
     return await this.propertyService.update(id, input, user);
   }
 
@@ -141,5 +140,10 @@ export class PropertyResolver {
   @ResolveField()
   async priceRules(@Parent() property: Property) {
     return this.propertyService.getPriceRules(property.id);
+  }
+
+  @ResolveField()
+  async organization(@Parent() property: PropertyEntity) {
+    return this.organizationService.findById(property.organizationId);
   }
 } 

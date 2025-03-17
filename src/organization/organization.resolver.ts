@@ -10,6 +10,7 @@ import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from 'auth/jwt-auth.guard';
 import { Res, UseGuards } from '@nestjs/common';
 import { Organization as OrganizationEntity } from './entities/organization.entity';
+import { OrganizationMember as OrganizationMemberEntity } from './entities/organization-member.entity';
 import { DataLoaderService } from '../data-loader/data-loader.service';
 import { PropertyService } from '../property/property.service';
 import { UserService } from '../user/user.service';
@@ -60,7 +61,11 @@ export class OrganizationResolver {
 
     @ResolveField()
     async primaryUser(@Parent() organization: OrganizationEntity) {
-        return this.organizationService.getPrimaryUser(organization.id);
+        const ownerMembership = await this.organizationService.getPrimaryUser(organization.id);
+        if (!ownerMembership) {
+            return null;
+        }
+        return ownerMembership;
     }
 
     @ResolveField()

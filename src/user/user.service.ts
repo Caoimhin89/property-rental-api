@@ -39,8 +39,8 @@ export class UserService {
     return await this.userRepository.findOne({ where: { id } });
   }
 
-  async findByIdWithOrganization(id: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { id }, relations: ['organization'] });
+  async findByIdWithOrganizationMembership(id: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { id }, relations: ['organizationMembership'] });
   }
 
   async findAll({ pagination }: { pagination?: PaginationInput }): Promise<UserEntityConnection> {

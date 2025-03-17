@@ -9,6 +9,7 @@ import { forwardRef } from '@nestjs/common';
 import { PropertyModule } from 'property/property.module';
 import { UserModule } from 'user/user.module';
 import { DataLoaderModule } from 'data-loader/data-loader.module';
+import { OrganizationMemberResolver } from './organization-member.resolver';
 
 @Module({
   imports: [
@@ -21,7 +22,11 @@ import { DataLoaderModule } from 'data-loader/data-loader.module';
     forwardRef(() => UserModule),
     forwardRef(() => DataLoaderModule),
   ],
-  providers: [OrganizationService, OrganizationResolver],
+  providers: [
+    OrganizationService, 
+    OrganizationResolver,
+    OrganizationMemberResolver
+  ],
   exports: [OrganizationService],
 })
 export class OrganizationModule {}

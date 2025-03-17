@@ -248,7 +248,7 @@ export class PropertyService {
     }
 
     // Check if user is authorized to update property
-    if (user.organization.id !== property.organizationId) {
+    if (user.organizationMembership.organizationId !== property.organizationId) {
       throw new PropertyUnauthorizedException();
     }
 
