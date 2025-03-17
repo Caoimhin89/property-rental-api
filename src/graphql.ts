@@ -686,6 +686,7 @@ export class User {
     avatar?: Nullable<string>;
     bookings?: BookingConnection;
     maintenanceRequests?: MaintenanceRequestConnection;
+    organization?: Nullable<Organization>;
     createdAt: DateTime;
     updatedAt: DateTime;
 }
