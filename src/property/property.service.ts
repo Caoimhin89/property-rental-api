@@ -225,7 +225,10 @@ export class PropertyService {
       ...(input.location && {
         location: {
           address: input.location.address,
+          postalCode: input.location.postalCode,
+          postalCodeSuffix: input.location.postalCodeSuffix,
           city: input.location.city,
+          county: input.location.county,
           state: input.location.state,
           country: input.location.country,
           latitude: input.location.latitude,
