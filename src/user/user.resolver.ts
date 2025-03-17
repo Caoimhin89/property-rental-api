@@ -4,13 +4,14 @@ import { CreateUserInput, PaginationInput, User, UserConnection } from '../graph
 import { User as UserEntity } from './entities/user.entity';
 import { BookingService } from '../booking/booking.service';
 import { DataLoaderService } from '../data-loader/data-loader.service';
-
+import { OrganizationService } from '../organization/organization.service';
 @Resolver(() => User)
 export class UserResolver {
   constructor(
     private readonly userService: UserService,
     private readonly bookingService: BookingService,
-    private readonly dataLoaderService: DataLoaderService
+    private readonly dataLoaderService: DataLoaderService,
+    private readonly organizationService: OrganizationService
   ) {}
 
   @Mutation(() => User)
@@ -61,5 +62,10 @@ export class UserResolver {
     @Parent() user: UserEntity,
     @Args('pagination', { nullable: true }) pagination?: PaginationInput) {
     return this.dataLoaderService.userMaintenanceRequestsLoader.load(user.id, pagination);
+  }
+
+  @ResolveField()
+  async organization(@Parent() user: UserEntity) {
+    return this.organizationService.findByUserId(user.id);
   }
 } 
