@@ -6,12 +6,6 @@ type Error {
 
 union PropertyResult = Property | Error
 
-enum AreaUnit {
-  SQUARE_METERS
-  SQUARE_FEET
-  ACRES
-}
-
 type AuthResponse {
   accessToken: String!
   refreshToken: String!
@@ -44,6 +38,12 @@ input CreateUserInput {
   email: String!
   password: String!
   name: String!
+}
+
+enum AreaUnit {
+  SQUARE_METERS
+  SQUARE_FEET
+  ACRES
 }
 
 input CreatePropertyInput {
