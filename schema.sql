@@ -49,13 +49,24 @@ CREATE TABLE properties (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Nearby Places Table
+CREATE TABLE nearby_places (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(255) NOT NULL,
+    distance DECIMAL(10,2) NOT NULL, -- in kilometers,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Enable PostGIS extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- Locations Table
 CREATE TABLE locations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+    property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
+    nearby_place_id UUID REFERENCES nearby_places(id) ON DELETE CASCADE,
     address VARCHAR(255),
     postal_code VARCHAR(255),
     postal_code_suffix VARCHAR(255),
@@ -67,22 +78,15 @@ CREATE TABLE locations (
     longitude DECIMAL(11,8) NOT NULL,
     coordinates geometry(Point, 4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)) STORED,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT exactly_one_parent CHECK (
+        (property_id IS NOT NULL AND nearby_place_id IS NULL) OR
+        (property_id IS NULL AND nearby_place_id IS NOT NULL)
+    )
 );
 
 -- Create spatial index
 CREATE INDEX idx_locations_coordinates ON locations USING GIST(coordinates);
-
--- Nearby Places Table
-CREATE TABLE nearby_places (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    type VARCHAR(255) NOT NULL,
-    distance DECIMAL(10,2) NOT NULL, -- in kilometers,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Amenities Table
 CREATE TABLE amenities (

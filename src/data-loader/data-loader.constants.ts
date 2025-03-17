@@ -8,3 +8,4 @@ export const ORGANIZATION_PROPERTIES_LOADER = 'organizationPropertiesLoader';
 export const ORGANIZATION_MEMBERS_LOADER = 'organizationMembersLoader';
 export const PROPERTY_IMAGES_LOADER = 'propertyImagesLoader';
 export const USER_MAINTENANCE_REQUESTS_LOADER = 'userMaintenanceRequestsLoader';
+export const NEARBY_PLACES_LOADER = 'nearbyPlacesLoader';

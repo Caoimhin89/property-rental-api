@@ -12,11 +12,13 @@ import {
   USERS_LOADER, LOCATIONS_LOADER,
   ORGANIZATION_PROPERTIES_LOADER,
   ORGANIZATION_MEMBERS_LOADER,
-  USER_MAINTENANCE_REQUESTS_LOADER
+  USER_MAINTENANCE_REQUESTS_LOADER,
+  NEARBY_PLACES_LOADER
 } from './data-loader.constants';
 import { PaginationInput } from '../graphql';
 import { MaintenanceService } from '../maintenance/maintenance.service';
-
+import { NearbyPlaceService } from '../nearby-place/nearby-place.service';
+import { Location } from 'location/entities/location.entity';
 @Injectable()
 export class DataLoaderService {
   [AMENITIES_LOADER]: DataLoader<string, any>;
@@ -38,6 +40,13 @@ export class DataLoaderService {
   [USER_MAINTENANCE_REQUESTS_LOADER]: {
     load: (userId: string, paginationArgs?: PaginationInput) => Promise<any>;
   };
+  [NEARBY_PLACES_LOADER]: {
+    load: (
+      location: Location,
+      paginationArgs?: PaginationInput,
+      radiusInMi?: number,
+      radiusInKm?: number) => Promise<any>;
+  };
   
   constructor(
     private readonly amenityService: AmenityService,
@@ -46,7 +55,8 @@ export class DataLoaderService {
     private readonly propertyService: PropertyService,
     private readonly userService: UserService,
     private readonly locationService: LocationService,
-    private readonly maintenanceService: MaintenanceService
+    private readonly maintenanceService: MaintenanceService,
+    private readonly nearbyPlaceService: NearbyPlaceService
   ) {
     this[AMENITIES_LOADER] = new DataLoader(
       (propertyIds: readonly string[]) => 
@@ -106,6 +116,18 @@ export class DataLoaderService {
     this[USER_MAINTENANCE_REQUESTS_LOADER] = {
       load: (userId: string, paginationArgs?: PaginationInput) => 
         this.maintenanceService.findByUserId(userId, paginationArgs)
+    };
+
+    this[NEARBY_PLACES_LOADER] = {
+      load: (
+        location: Location,
+        paginationArgs?: PaginationInput,
+        radiusInMi?: number,
+        radiusInKm?: number) => this.nearbyPlaceService.findWithinRadiusOfLocation(
+          location,
+          paginationArgs,
+          radiusInMi,
+          radiusInKm)
     };
   }
 

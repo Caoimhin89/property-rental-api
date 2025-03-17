@@ -203,8 +203,7 @@ export class CreateLocationInput {
 export class CreateNearbyPlaceInput {
     name: string;
     type: string;
-    distance: number;
-    propertyId: string;
+    location: CreateLocationInput;
 }
 
 export class CreateAmenityInput {
@@ -529,6 +528,7 @@ export class Property {
     blockedDates: BlockedDate[];
     priceRules: PriceRule[];
     maintenanceRequests?: MaintenanceRequestConnection;
+    nearbyPlaces?: NearbyPlaceConnection;
     createdAt: DateTime;
     updatedAt: DateTime;
     isAvailable?: boolean;
@@ -686,7 +686,6 @@ export class Location {
     state?: Nullable<string>;
     country?: Nullable<string>;
     coordinates: Coordinates;
-    nearbyPlaces: NearbyPlace[];
     createdAt: DateTime;
     updatedAt: DateTime;
 }
@@ -699,6 +698,7 @@ export class Coordinates {
 
 export class NearbyPlace {
     __typename?: 'NearbyPlace';
+    id: string;
     name: string;
     type: string;
     distance: number;
@@ -837,7 +837,7 @@ export class Organization {
     id: string;
     name: string;
     organizationType: OrganizationType;
-    primaryUser?: Nullable<User>;
+    primaryUser?: Nullable<OrganizationMember>;
     members: OrganizationMember[];
     properties: PropertyConnection;
     createdAt: DateTime;

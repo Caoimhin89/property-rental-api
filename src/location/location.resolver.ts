@@ -18,9 +18,4 @@ export class LocationResolver {
       longitude: location.longitude
     };
   }
-
-  @ResolveField()
-  async nearbyPlaces(@Parent() location: LocationEntity) {
-    return this.nearbyPlaceService.findByPropertyId(location.property.id);
-  }
 } 

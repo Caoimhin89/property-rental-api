@@ -138,8 +138,7 @@ input CreateLocationInput {
 input CreateNearbyPlaceInput {
   name: String!
   type: String!
-  distance: Float!
-  propertyId: ID!
+  location: CreateLocationInput!
 }
 
 input CreateAmenityInput {
@@ -354,6 +353,11 @@ type Property {
     status: MaintenanceRequestStatus
     pagination: PaginationInput
   ): MaintenanceRequestConnection!
+  nearbyPlaces(
+    pagination: PaginationInput,
+    radiusInMi: Float,
+    radiusInKm: Float
+  ): NearbyPlaceConnection!
   createdAt: DateTime!
   updatedAt: DateTime!
   # Calculate these based on date range query
@@ -515,7 +519,6 @@ type Location {
   state: String
   country: String
   coordinates: Coordinates!
-  nearbyPlaces: [NearbyPlace!]!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -526,6 +529,7 @@ type Coordinates {
 }
 
 type NearbyPlace {
+  id: ID!
   name: String!
   type: String!
   distance: Float! # in kilometers

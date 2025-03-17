@@ -99,6 +99,8 @@ export class Property {
   @OneToOne(() => Location, location => location.property, { cascade: true })
   location?: Location;
 
+  _resolvedLocation?: Location; // Used to store the resolved location
+
   @OneToMany(() => Image, image => image.property)
   images?: Image[];
 

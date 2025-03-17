@@ -74,6 +74,8 @@ export class PropertyResolver {
     if (!location) {
       throw new Error(`Location not found for property ${property.id}`);
     }
+    // Store the resolved location on the property entity
+    (property as PropertyEntity)._resolvedLocation = location;
     return location;
   }
 
@@ -146,4 +148,23 @@ export class PropertyResolver {
   async organization(@Parent() property: PropertyEntity) {
     return this.organizationService.findById(property.organizationId);
   }
-} 
+
+  @ResolveField()
+  async nearbyPlaces(
+    @Parent() property: PropertyEntity,
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput,
+    @Args('radiusInMi', { nullable: true }) radiusInMi?: number,
+    @Args('radiusInKm', { nullable: true }) radiusInKm?: number
+  ) {
+    // Use the already resolved location if available
+    const location = (property as PropertyEntity)._resolvedLocation || await this.locationService.findByPropertyId(property.id);
+    if (!location) {
+      throw new Error(`Location not found for property ${property.id}`);
+    }
+    return this.dataLoader.nearbyPlacesLoader.load(
+      location,
+      pagination,
+      radiusInMi,
+      radiusInKm);
+  }
+}

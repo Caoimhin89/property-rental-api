@@ -7,7 +7,7 @@ import { PropertyModule } from '../property/property.module';
 import { ReviewModule } from '../review/review.module';
 import { LocationModule } from '../location/location.module';
 import { MaintenanceModule } from '../maintenance/maintenance.module';
-
+import { NearbyPlaceModule } from '../nearby-place/nearby-place.module';
 @Module({
   imports: [
     forwardRef(() => AmenityModule),
@@ -17,6 +17,7 @@ import { MaintenanceModule } from '../maintenance/maintenance.module';
     forwardRef(() => ReviewModule),
     forwardRef(() => LocationModule),
     forwardRef(() => MaintenanceModule),
+    forwardRef(() => NearbyPlaceModule),
   ],
   providers: [DataLoaderService],
   exports: [DataLoaderService],

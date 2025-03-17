@@ -4,14 +4,14 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne } from 'typeorm';
+  OneToOne } from 'typeorm';
 import { Location as LocationEntity } from '../../location/entities/location.entity';
 @Entity('nearby_places')
 export class NearbyPlace {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => LocationEntity, location => location.nearbyPlaces)
+  @OneToOne(() => LocationEntity, location => location.nearbyPlace, { cascade: true })
   location: LocationEntity;
 
   @Column('uuid', { name: 'location_id' })
