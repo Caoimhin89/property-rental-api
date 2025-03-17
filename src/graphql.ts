@@ -132,6 +132,62 @@ export class CreatePropertyInput {
     images?: Nullable<CreateImageInput[]>;
 }
 
+export class UpdatePropertyInput {
+    name?: Nullable<string>;
+    description?: Nullable<string>;
+    maxOccupancy?: Nullable<number>;
+    propertyType?: Nullable<PropertyType>;
+    basePrice?: Nullable<number>;
+    numBathrooms?: Nullable<number>;
+    numBedrooms?: Nullable<number>;
+    numStories?: Nullable<number>;
+    garageSpaces?: Nullable<number>;
+    yearBuilt?: Nullable<number>;
+    area?: Nullable<number>;
+    areaUnit?: Nullable<AreaUnit>;
+    lotSize?: Nullable<number>;
+    lotSizeUnit?: Nullable<AreaUnit>;
+    organizationId?: Nullable<string>;
+    location?: Nullable<UpdateLocationInput>;
+    images?: Nullable<UpdateImageInput[]>;
+    blockedDates?: Nullable<UpdateBlockedDateInput[]>;
+    priceRules?: Nullable<UpdatePriceRuleInput[]>;
+}
+
+export class UpdateLocationInput {
+    address?: Nullable<string>;
+    postalCode?: Nullable<string>;
+    postalCodeSuffix?: Nullable<string>;
+    city?: Nullable<string>;
+    county?: Nullable<string>;
+    state?: Nullable<string>;
+    country?: Nullable<string>;
+    latitude?: Nullable<number>;
+    longitude?: Nullable<number>;
+    radiusInKm?: Nullable<number>;
+    radiusInMiles?: Nullable<number>;
+}
+
+export class UpdateBlockedDateInput {
+    id?: Nullable<string>;
+    startDate?: Nullable<DateTime>;
+    endDate?: Nullable<DateTime>;
+    reason?: Nullable<string>;
+}
+
+export class UpdatePriceRuleInput {
+    id?: Nullable<string>;
+    startDate?: Nullable<DateTime>;
+    endDate?: Nullable<DateTime>;
+    price?: Nullable<number>;
+    description?: Nullable<string>;
+}
+
+export class UpdateImageInput {
+    url?: Nullable<string>;
+    caption?: Nullable<string>;
+}
+
 export class CreateLocationInput {
     address: string;
     postalCode: string;
@@ -326,6 +382,13 @@ export class BoundingBoxInput {
     northEastLng: number;
 }
 
+export class Error {
+    __typename?: 'Error';
+    code: string;
+    message: string;
+    details?: Nullable<string>;
+}
+
 export class AuthResponse {
     __typename?: 'AuthResponse';
     accessToken: string;
@@ -347,6 +410,8 @@ export abstract class IMutation {
     abstract removeUser(id: string): boolean | Promise<boolean>;
 
     abstract createProperty(input: CreatePropertyInput): Property | Promise<Property>;
+
+    abstract updateProperty(id: string, input: UpdatePropertyInput): PropertyResult | Promise<PropertyResult>;
 
     abstract removeProperty(id: string): boolean | Promise<boolean>;
 
@@ -815,4 +880,5 @@ export class OrganizationMemberEdge {
 
 export type DateTime = any;
 export type Money = any;
+export type PropertyResult = Property | Error;
 type Nullable<T> = T | null;

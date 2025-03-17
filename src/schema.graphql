@@ -1,3 +1,11 @@
+type Error {
+  code: String!
+  message: String!
+  details: String
+}
+
+union PropertyResult = Property | Error
+
 enum AreaUnit {
   SQUARE_METERS
   SQUARE_FEET
@@ -57,6 +65,62 @@ input CreatePropertyInput {
   location: CreateLocationInput!
   amenities: [CreateAmenityInput!]
   images: [CreateImageInput!]
+}
+
+input UpdatePropertyInput {
+  name: String
+  description: String
+  maxOccupancy: Int
+  propertyType: PropertyType
+  basePrice: Float
+  numBathrooms: Float
+  numBedrooms: Int
+  numStories: Int
+  garageSpaces: Int
+  yearBuilt: Int
+  area: Float
+  areaUnit: AreaUnit
+  lotSize: Float
+  lotSizeUnit: AreaUnit
+  organizationId: ID
+  location: UpdateLocationInput
+  images: [UpdateImageInput!]
+  blockedDates: [UpdateBlockedDateInput!]
+  priceRules: [UpdatePriceRuleInput!]
+}
+
+input UpdateLocationInput {
+  address: String
+  postalCode: String
+  postalCodeSuffix: String
+  city: String
+  county: String
+  state: String
+  country: String
+  latitude: Float
+  longitude: Float
+  radiusInKm: Float
+  radiusInMiles: Float
+}
+
+input UpdateBlockedDateInput {
+  id: ID
+  startDate: DateTime
+  endDate: DateTime
+  reason: String
+}
+
+input UpdatePriceRuleInput {
+  id: ID
+  startDate: DateTime
+  endDate: DateTime
+  price: Float
+  description: String
+}
+
+input UpdateImageInput {
+  url: String
+  caption: String
 }
 
 input CreateLocationInput {
@@ -135,6 +199,7 @@ type Mutation {
 
   ## Property Mutations
   createProperty(input: CreatePropertyInput!): Property!
+  updateProperty(id: ID!, input: UpdatePropertyInput!): PropertyResult!
   removeProperty(id: ID!): Boolean!
   blockDates(propertyId: ID!, input: CreateBlockedDateInput!): BlockedDate!
   setPriceRule(propertyId: ID!, input: CreatePriceRuleInput!): PriceRule!
