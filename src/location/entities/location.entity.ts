@@ -14,10 +14,10 @@ export class Location {
   @Column()
   address: string;
 
-  @Column()
+  @Column('varchar', { nullable: true, name: 'postal_code' })
   postalCode: string;
 
-  @Column()
+  @Column('varchar', { nullable: true, name: 'postal_code_suffix' })
   postalCodeSuffix: string;
 
   @Column()
