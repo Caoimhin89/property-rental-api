@@ -2,21 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Property as PropertyEntity } from './entities/property.entity';
-import { Property as PropertyType, PropertyFilter, PaginationInput, YearBuiltOperator, PropertySortField, SortOrder, PageInfo, AreaUnit } from '../graphql';
+import { User as UserEntity } from 'user/entities/user.entity';
+import { Property as PropertyType, PropertyFilter, PaginationInput, YearBuiltOperator, PropertySortField, SortOrder, PageInfo, AreaUnit, UpdatePropertyInput } from '../graphql';
 import { acresToSquareMeters, milesToKilometers, squareFeetToSquareMeters, toCursor } from '../common/utils';
 import { CreatePropertyInput } from '../graphql';
 import { BlockedDate } from './entities/blocked-date.entity';
 import { PriceRule } from './entities/price-rule.entity';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { LoggerService } from '../common/services/logger.service';
-
-interface FindAllArgs {
-  filter?: PropertyFilter;
-  after?: string;
-  before?: string;
-  first?: number;
-  last?: number;
-}
+import { PropertyNotFoundException, PropertyUnauthorizedException } from './property.errors';
 
 interface PropertyEntityConnection {
   edges: {
@@ -57,12 +51,12 @@ export class PropertyService {
     return properties.map(property => this.toGraphQL(property));
   }
 
-  async findAll(args: { 
-    filter?: PropertyFilter; 
+  async findAll(args: {
+    filter?: PropertyFilter;
     pagination?: PaginationInput;
   }): Promise<PropertyEntityConnection> {
     const { filter, pagination } = args;
-    
+
     const qb = this.propertyRepository.createQueryBuilder('property');
 
     // Join necessary relations
@@ -114,7 +108,7 @@ export class PropertyService {
       qb.andWhere('property.created_at > (SELECT created_at FROM properties WHERE id = :before)', { before });
     }
 
-    this.logger.debug('Generated SQL:', 'PropertyService', { 
+    this.logger.debug('Generated SQL:', 'PropertyService', {
       sql: qb.getSql(),
       parameters: qb.getParameters()
     });
@@ -241,6 +235,73 @@ export class PropertyService {
     const { location: _, ...propertyWithoutLocation } = savedProperty;
     this.logger.debug('Property created', 'PropertyService', { propertyType: savedProperty.propertyType });
     return propertyWithoutLocation;
+  }
+
+  async update(id: string, input: UpdatePropertyInput, user: UserEntity): Promise<PropertyEntity> {
+    // Check if property exists
+    let property: PropertyEntity;
+    try {
+      property = await this.propertyRepository.findOneOrFail({ where: { id } });
+    } catch (error: any) {
+      this.logger.error('Error updating property', 'PropertyService', error);
+      throw new PropertyNotFoundException(id);
+    }
+
+    // Check if user is authorized to update property
+    if (user.organization.id !== property.organizationId) {
+      throw new PropertyUnauthorizedException();
+    }
+
+    // Update property
+    try {
+      const updatedProperty = this.propertyRepository.merge(property, {
+        ...(input.name && { name: input.name }),
+        ...(input.description && { description: input.description }),
+        ...(input.maxOccupancy && { maxOccupancy: input.maxOccupancy }),
+        ...(input.propertyType && { propertyType: input.propertyType }),
+        ...(input.basePrice && { basePrice: input.basePrice }),
+        ...(input.numBathrooms && { numBathrooms: input.numBathrooms }),
+        ...(input.numBedrooms && { numBedrooms: input.numBedrooms }),
+        ...(input.numStories && { numStories: input.numStories }),
+        ...(input.garageSpaces && { garageSpaces: input.garageSpaces }),
+        ...(input.yearBuilt && { yearBuilt: input.yearBuilt }),
+        ...(input.area && { areaInSquareMeters: input.area }),
+        ...(input.lotSize && { lotSizeInSquareMeters: input.lotSize }),
+        ...(input.location && {
+          location: {
+            ...(input.location.address && { address: input.location.address }),
+            ...(input.location.postalCode && { postalCode: input.location.postalCode }),
+            ...(input.location.postalCodeSuffix && { postalCodeSuffix: input.location.postalCodeSuffix }),
+            ...(input.location.city && { city: input.location.city }),
+            ...(input.location.county && { county: input.location.county }),
+            ...(input.location.state && { state: input.location.state }),
+            ...(input.location.country && { country: input.location.country }),
+            ...(input.location.latitude && { latitude: input.location.latitude }),
+            ...(input.location.longitude && { longitude: input.location.longitude }),
+          }
+        }),
+        ...(input.blockedDates && { blockedDates: input.blockedDates.map(blockedDate => ({
+          ...blockedDate,
+          ...(blockedDate.id && { id: blockedDate.id }),
+          ...(blockedDate.startDate && { startDate: blockedDate.startDate }),
+          ...(blockedDate.endDate && { endDate: blockedDate.endDate }),
+          ...(blockedDate.reason && { reason: blockedDate.reason })
+        })) }),
+        ...(input.priceRules && { priceRules: input.priceRules.map(priceRule => ({
+            ...priceRule,
+            ...(priceRule.id && { id: priceRule.id }),
+            ...(priceRule.startDate && { startDate: priceRule.startDate }),
+            ...(priceRule.endDate && { endDate: priceRule.endDate }),
+            ...(priceRule.price && { price: priceRule.price }),
+            ...(priceRule.description && { description: priceRule.description })
+          }))
+        })
+      });
+      return this.propertyRepository.save(updatedProperty);
+    } catch (error: any) {
+      this.logger.error('Error updating property', 'PropertyService', error);
+      throw error;
+    }
   }
 
   async remove(id: string): Promise<boolean> {
@@ -431,7 +492,7 @@ export class PropertyService {
         } else if (unit === AreaUnit.ACRES) {
           maxLotSize = acresToSquareMeters(max);
         }
-        qb.andWhere('property.lotSizeInSquareMeters <= :maxLotSize', { maxLotSize });    
+        qb.andWhere('property.lotSizeInSquareMeters <= :maxLotSize', { maxLotSize });
       }
     }
   }
@@ -452,11 +513,11 @@ export class PropertyService {
           .andWhere('b.start_date < :endDate');
         return 'NOT EXISTS ' + bookingSubQuery.getQuery();
       })
-      .setParameters({
-        cancelledStatus: 'CANCELLED',
-        startDate: filter.availability.startDate,
-        endDate: filter.availability.endDate
-      });
+        .setParameters({
+          cancelledStatus: 'CANCELLED',
+          startDate: filter.availability.startDate,
+          endDate: filter.availability.endDate
+        });
 
       // Exclude properties that have blocked dates in the range
       qb.andWhere(qb => {
@@ -472,7 +533,7 @@ export class PropertyService {
   }
 
   private applyPropertyTypeFilter(
-    qb: SelectQueryBuilder<PropertyEntity>, 
+    qb: SelectQueryBuilder<PropertyEntity>,
     filter: PropertyFilter
   ): void {
     if (filter.propertyType?.length) {
@@ -533,9 +594,9 @@ export class PropertyService {
   ): void {
     if (!filter.location) return;
 
-    const { 
-      latitude, 
-      longitude, 
+    const {
+      latitude,
+      longitude,
       radiusInKm,
       radiusInMiles,
       city,
@@ -544,7 +605,7 @@ export class PropertyService {
       country,
       postalCode,
       postalCodeSuffix,
-      boundingBox 
+      boundingBox
     } = filter.location;
 
     if (city) {
@@ -571,7 +632,7 @@ export class PropertyService {
     if (county) {
       qb.andWhere('location.county = :county', { county });
     }
-    
+
 
     // Radius search
     if (latitude && longitude && (radiusInKm || radiusInMiles)) {
@@ -583,7 +644,7 @@ export class PropertyService {
       } else {
         throw new Error('Radius must be provided in either km or miles');
       }
-      
+
       qb.andWhere(`
         ST_DWithin(
           location.coordinates::geography,
@@ -636,7 +697,7 @@ export class PropertyService {
             .andWhere(`a${index}.name = :amenity${index}`);
           return 'EXISTS ' + subQuery.getQuery();
         })
-        .setParameter(`amenity${index}`, amenity);
+          .setParameter(`amenity${index}`, amenity);
       });
     }
 
@@ -650,7 +711,7 @@ export class PropertyService {
           .andWhere('a.name IN (:...amenities)');
         return 'EXISTS ' + subQuery.getQuery();
       })
-      .setParameter('amenities', includeAny);
+        .setParameter('amenities', includeAny);
     }
 
     if (exclude?.length) {
@@ -663,7 +724,7 @@ export class PropertyService {
           .andWhere('a.name IN (:...excludeAmenities)');
         return 'NOT EXISTS ' + subQuery.getQuery();
       })
-      .setParameter('excludeAmenities', exclude);
+        .setParameter('excludeAmenities', exclude);
     }
   }
 
@@ -679,7 +740,7 @@ export class PropertyService {
 
     filter.sort.forEach((sortRule, index) => {
       const order = sortRule.order === SortOrder.ASC ? 'ASC' : 'DESC';
-      
+
       switch (sortRule.field) {
         case PropertySortField.PRICE:
           qb.addOrderBy('property.basePrice', order);

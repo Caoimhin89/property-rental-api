@@ -1,13 +1,22 @@
 import { Args, Query, Resolver, ResolveField, Parent, Mutation } from '@nestjs/graphql';
 import { PropertyService } from './property.service';
 import { DataLoaderService } from '../data-loader/data-loader.service';
-import { CreatePropertyInput, Property, PropertyConnection, PropertyFilter, Location, PaginationInput, ImageConnection } from '../graphql';
+import {
+  CreatePropertyInput,
+  Property,
+  PropertyConnection,
+  PropertyFilter,
+  Location,
+  PaginationInput,
+  ImageConnection,
+  UpdatePropertyInput } from '../graphql';
 import { Property as PropertyEntity } from './entities/property.entity';
 import { BookingService } from '../booking/booking.service';
 import { LocationService } from '../location/location.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
-
+import { CurrentUser } from 'auth/current-user.decorator';
+import { User } from 'user/entities/user.entity';
 @Resolver(() => Property)
 export class PropertyResolver {
   constructor(
@@ -21,6 +30,19 @@ export class PropertyResolver {
   @Mutation(() => Property)
   async createProperty(@Args('input') input: CreatePropertyInput) {
     return await this.propertyService.create(input);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Property)
+  async updateProperty(
+    @Args('id') id: string,
+    @Args('input') input: UpdatePropertyInput,
+    @CurrentUser() user: User
+  ) {
+    if (user.organization.id !== input.organizationId) {
+      throw new Error('You are not authorized to update this property');
+    }
+    return await this.propertyService.update(id, input, user);
   }
 
   @Query(() => Property, { nullable: true })
