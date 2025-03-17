@@ -85,12 +85,13 @@ export class OrganizationService {
     });
   }
 
-  async findByUserId(userId: string): Promise<OrganizationEntity[]> {
+  async findByUserId(userId: string): Promise<OrganizationEntity | null> {
     return this.organizationRepository
       .createQueryBuilder('organization')
       .innerJoin('organization.members', 'member')
       .where('member.user_id = :userId', { userId })
-      .getMany();
+      .orWhere('organization.primary_user_id = :userId', { userId })
+      .getOne();
   }
 
   async addMember(organizationId: string, userId: string, role: OrganizationRole): Promise<OrganizationMemberEntity> {
