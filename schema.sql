@@ -25,7 +25,6 @@ CREATE TABLE organizations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     organization_type organization_type NOT NULL,
-    -- For sole proprietorships, this links to the user who owns it
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -96,7 +95,7 @@ CREATE TABLE amenities (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Then create the linking table for the many-to-many relationship
+-- Linking table for the many-to-many relationship
 CREATE TABLE property_amenities (
     property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
     amenity_id UUID NOT NULL REFERENCES amenities(id) ON DELETE CASCADE,

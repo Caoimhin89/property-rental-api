@@ -1,17 +1,21 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Property } from '../../property/entities/property.entity';
-
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne } from 'typeorm';
+import { Location as LocationEntity } from '../../location/entities/location.entity';
 @Entity('nearby_places')
 export class NearbyPlace {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Property, property => property.location)
-  @JoinColumn({ name: 'property_id' })
-  property: Property;
+  @ManyToOne(() => LocationEntity, location => location.nearbyPlaces)
+  location: LocationEntity;
 
-  @Column()
-  location_id: string;
+  @Column('uuid', { name: 'location_id' })
+  locationId: string;
 
   @Column()
   name: string;

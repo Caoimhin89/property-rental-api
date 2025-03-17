@@ -38,7 +38,7 @@ export class Location {
   @Column('decimal', { precision: 11, scale: 8 })
   longitude: number;
 
-  @OneToMany(() => NearbyPlace, place => place.property)
+  @OneToMany(() => NearbyPlace, place => place.location)
   nearbyPlaces: NearbyPlace[];
 
   @CreateDateColumn({ type: 'timestamp with time zone', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
