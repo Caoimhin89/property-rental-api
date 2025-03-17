@@ -510,6 +510,7 @@ type User {
     status: MaintenanceRequestStatus
     pagination: PaginationInput
   ): MaintenanceRequestConnection!
+  organization: Organization
   createdAt: DateTime!
   updatedAt: DateTime!
 }
