@@ -23,7 +23,7 @@ export class OrganizationService {
     const organization = this.organizationRepository.create({
       name: input.name,
       organizationType: input.organizationType,
-      primaryUser: { id: input.primaryUserId || user.id },
+      members: [{ id: user.id, role: OrganizationRole.OWNER }],
     });
 
     const savedOrganization = await this.organizationRepository.save(organization);
@@ -40,9 +40,8 @@ export class OrganizationService {
       organizationType: savedOrganization.organizationType,
       organizationId: savedOrganization.id 
     });
-    const { primaryUser: _, ...createdOrganization } = savedOrganization;
 
-    return createdOrganization;
+    return savedOrganization;
   }
 
   async update(id: string, input: UpdateOrganizationInput): Promise<OrganizationEntity> {
@@ -90,9 +89,17 @@ export class OrganizationService {
       .createQueryBuilder('organization')
       .innerJoin('organization.members', 'member')
       .where('member.user_id = :userId', { userId })
-      .orWhere('organization.primary_user_id = :userId', { userId })
       .getOne();
   }
+
+  async getPrimaryUser(organizationId: string): Promise<OrganizationMemberEntity | null> {
+    return this.organizationMemberRepository
+      .createQueryBuilder('organization_member')
+      .where('organization_member.organization_id = :organizationId', { organizationId })
+      .andWhere('organization_member.role = :role', { role: OrganizationRole.OWNER })
+      .getOne();
+  }
+  
 
   async addMember(organizationId: string, userId: string, role: OrganizationRole): Promise<OrganizationMemberEntity> {
     const membership = this.organizationMemberRepository.create({

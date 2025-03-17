@@ -26,7 +26,6 @@ CREATE TABLE organizations (
     name VARCHAR(255) NOT NULL,
     organization_type organization_type NOT NULL,
     -- For sole proprietorships, this links to the user who owns it
-    primary_user_id UUID REFERENCES users(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -171,12 +170,13 @@ CREATE TABLE bookings (
 CREATE TABLE organization_members (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id),
-    user_id UUID NOT NULL REFERENCES users(id),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id),
     role organization_role NOT NULL,  -- OWNER, ADMIN, MEMBER, etc.
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(organization_id, user_id)
 );
+CREATE UNIQUE INDEX idx_unique_organization_owner ON organization_members(organization_id, role) WHERE role = 'OWNER';
 
 -- Maintenance Requests Table
 CREATE TABLE maintenance_requests (
@@ -232,5 +232,3 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_properties_organization ON properties(organization_id);
 CREATE INDEX idx_organization_members_user ON organization_members(user_id);
 CREATE INDEX idx_organization_members_org ON organization_members(organization_id);
-CREATE INDEX idx_organizations_primary_user ON organizations(primary_user_id) 
-    WHERE organization_type = 'SOLE_PROPRIETORSHIP'; 

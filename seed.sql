@@ -4,15 +4,16 @@
 INSERT INTO users (id, name, email, password, avatar, created_at, updated_at) VALUES
 ('dce2e155-6e65-4dd1-b3ec-1496021e31fa', 'John Doe', 'john@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('04ef4013-4da7-4a73-b024-0548fb5f9511', 'Jane Smith', 'jane@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('fe31a737-e863-47a8-a76c-4d4fa01bff40', 'Bob Wilson', 'bob@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('fe31a737-e863-47a8-a76c-4d4fa01bff40', 'Bob Wilson', 'bob@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('08e48e8d-4ec6-42fd-82da-4c10e317b300', 'Charlie Brown', 'charlie@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Organizations
-INSERT INTO organizations (id, name, organization_type, primary_user_id, created_at, updated_at) VALUES
+INSERT INTO organizations (id, name, organization_type, created_at, updated_at) VALUES
 -- Sole proprietorships for individual owners
-('e2f5c35f-f54f-466f-9456-cb2193d32d23', 'John Doe Properties', 'SOLE_PROPRIETORSHIP', 'dce2e155-6e65-4dd1-b3ec-1496021e31fa', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('d6d8d8fc-53a7-4ddc-9974-09359b20e187', 'Jane Smith Rentals', 'SOLE_PROPRIETORSHIP', '04ef4013-4da7-4a73-b024-0548fb5f9511', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('e2f5c35f-f54f-466f-9456-cb2193d32d23', 'John Doe Properties', 'SOLE_PROPRIETORSHIP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('d6d8d8fc-53a7-4ddc-9974-09359b20e187', 'Jane Smith Rentals', 'SOLE_PROPRIETORSHIP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 -- A company
-('cdd32b09-b38b-4002-b77d-3726b6be4961', 'Luxury Stays Inc.', 'COMPANY', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('cdd32b09-b38b-4002-b77d-3726b6be4961', 'Luxury Stays Inc.', 'COMPANY', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Organization Members
 INSERT INTO organization_members (id, organization_id, user_id, role, created_at, updated_at) VALUES
@@ -21,9 +22,8 @@ INSERT INTO organization_members (id, organization_id, user_id, role, created_at
 -- Jane Smith is owner of her organization
 ('0ee0c597-e73b-4b9f-9522-212dbc7282d1', 'd6d8d8fc-53a7-4ddc-9974-09359b20e187', '04ef4013-4da7-4a73-b024-0548fb5f9511', 'OWNER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 -- Multiple members in the company
-('f88d2356-e62e-4574-b1cf-91b27b9c106e', 'cdd32b09-b38b-4002-b77d-3726b6be4961', 'fe31a737-e863-47a8-a76c-4d4fa01bff40', 'ADMIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('f72c42f2-24a5-4077-8f84-9a9b2c19182f', 'cdd32b09-b38b-4002-b77d-3726b6be4961', '04ef4013-4da7-4a73-b024-0548fb5f9511', 'MEMBER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
-
+('f88d2356-e62e-4574-b1cf-91b27b9c106e', 'cdd32b09-b38b-4002-b77d-3726b6be4961', 'fe31a737-e863-47a8-a76c-4d4fa01bff40', 'OWNER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('dfb66ad7-24d6-4603-9597-af4059135296', 'cdd32b09-b38b-4002-b77d-3726b6be4961', '08e48e8d-4ec6-42fd-82da-4c10e317b300', 'MEMBER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 -- Properties
 INSERT INTO properties (id, name, description, property_type, base_price, max_occupancy, organization_id, num_bedrooms, num_bathrooms, num_stories, garage_spaces, year_built, area_in_square_meters, lot_size_in_square_meters, created_at, updated_at) VALUES
 ('b5d5c35f-f54f-466f-9456-cb2193d32d23', 'Cozy Cottage', 'A beautiful cottage in the woods', 'HOUSE', 100.00, 4, 'e2f5c35f-f54f-466f-9456-cb2193d32d23', 2, 1, 1, 1, 2010, 100, 1000, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),

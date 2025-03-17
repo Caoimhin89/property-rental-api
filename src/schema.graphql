@@ -736,7 +736,7 @@ type Organization {
   id: ID!
   name: String!
   organizationType: OrganizationType!
-  primaryUser: User
+  primaryUser: OrganizationMember
   members: [OrganizationMember!]!
   properties: PropertyConnection!
   createdAt: DateTime!

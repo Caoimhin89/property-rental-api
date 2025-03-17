@@ -60,7 +60,7 @@ export class OrganizationResolver {
 
     @ResolveField()
     async primaryUser(@Parent() organization: OrganizationEntity) {
-        return this.userService.findById(organization.primaryUserId);
+        return this.organizationService.getPrimaryUser(organization.id);
     }
 
     @ResolveField()

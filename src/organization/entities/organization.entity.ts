@@ -1,7 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, CreateDateColumn, JoinColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn } from 'typeorm';
 import { OrganizationMember } from './organization-member.entity';
 import { Property } from '../../property/entities/property.entity';
-import { User } from '../../user/entities/user.entity';
 import { OrganizationType } from '../../graphql';
 
 @Entity('organizations')
@@ -18,13 +23,6 @@ export class Organization {
     name: 'organization_type'
   })
   organizationType: OrganizationType;
-
-  @Column({ name: 'primary_user_id', nullable: true })
-  primaryUserId: string;
-
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'primary_user_id' })
-  primaryUser?: User;
 
   @OneToMany(() => OrganizationMember, (member: OrganizationMember) => member.organization)
   members: OrganizationMember[];

@@ -8,6 +8,12 @@ export class OrganizationMember {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('uuid', { name: 'organization_id' })
+  organizationId: string;
+
+  @Column('uuid', { name: 'user_id' })
+  userId: string;
+
   @ManyToOne(() => Organization, organization => organization.members)
   @JoinColumn({ name: 'organization_id' })
   organization: Organization;
