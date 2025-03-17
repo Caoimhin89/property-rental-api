@@ -6,12 +6,13 @@ import { UserResolver } from './user.resolver';
 import { BookingModule } from '../booking/booking.module';
 import { forwardRef } from '@nestjs/common';
 import { DataLoaderModule } from '../data-loader/data-loader.module';
-
+import { OrganizationModule } from '../organization/organization.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     BookingModule,
-    forwardRef(() => DataLoaderModule)
+    forwardRef(() => DataLoaderModule),
+    forwardRef(() => OrganizationModule)
   ],
   providers: [UserService, UserResolver],
   exports: [UserService]
