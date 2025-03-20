@@ -1,6 +1,8 @@
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-store';
 import { PropertyModule } from './property/property.module';
 import { AmenityModule } from './amenity/amenity.module';
 import { ImageModule } from './image/image.module';
@@ -17,6 +19,16 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
 import { SearchModule } from './search/search.module';
 @Module({
   imports: [
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useFactory: async () => ({
+        store: redisStore,
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        password: process.env.REDIS_PASSWORD || 'redis',
+        ttl: 60,
+      }),
+    }),
     DatabaseModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
