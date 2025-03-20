@@ -83,6 +83,11 @@ export enum PropertySortField {
     NUM_BATHROOMS = "NUM_BATHROOMS"
 }
 
+export enum SearchResultType {
+    PROPERTY = "PROPERTY",
+    LOCATION = "LOCATION"
+}
+
 export class LoginInput {
     email: string;
     password: string;
@@ -381,6 +386,14 @@ export class BoundingBoxInput {
     northEastLng: number;
 }
 
+export class SearchFilter {
+    types?: Nullable<SearchResultType[]>;
+    nearLocation?: Nullable<LocationFilter>;
+    propertyTypes?: Nullable<PropertyType[]>;
+    priceRange?: Nullable<PriceFilter>;
+    minSimilarity?: Nullable<number>;
+}
+
 export class Error {
     __typename?: 'Error';
     code: string;
@@ -503,6 +516,8 @@ export abstract class IQuery {
     abstract maintenanceRequest(id: string): Nullable<MaintenanceRequest> | Promise<Nullable<MaintenanceRequest>>;
 
     abstract maintenanceRequests(propertyId?: Nullable<string>, status?: Nullable<MaintenanceRequestStatus>, pagination?: Nullable<PaginationInput>): MaintenanceRequestConnection | Promise<MaintenanceRequestConnection>;
+
+    abstract search(term: string, pagination?: Nullable<PaginationInput>, filters?: Nullable<SearchFilter>): SearchResultConnection | Promise<SearchResultConnection>;
 }
 
 export class Property {
@@ -876,6 +891,26 @@ export class OrganizationMemberEdge {
     __typename?: 'OrganizationMemberEdge';
     cursor: string;
     node: OrganizationMember;
+}
+
+export class SearchResult {
+    __typename?: 'SearchResult';
+    property: Property;
+    similarity: number;
+    highlights?: Nullable<string[]>;
+}
+
+export class SearchResultEdge {
+    __typename?: 'SearchResultEdge';
+    cursor: string;
+    node: SearchResult;
+}
+
+export class SearchResultConnection {
+    __typename?: 'SearchResultConnection';
+    edges: SearchResultEdge[];
+    pageInfo: PageInfo;
+    totalCount: number;
 }
 
 export type DateTime = any;

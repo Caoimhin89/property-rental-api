@@ -280,6 +280,11 @@ type Query {
     status: MaintenanceRequestStatus
     pagination: PaginationInput
   ): MaintenanceRequestConnection!
+  search(
+    term: String!, 
+    pagination: PaginationInput,
+    filters: SearchFilter
+  ): SearchResultConnection!
 }
 
 # Scalar Types
@@ -853,4 +858,43 @@ input BoundingBoxInput {
   southWestLng: Float!
   northEastLat: Float!
   northEastLng: Float!
+}
+
+# ADVANCED SEARCH
+enum SearchResultType {
+  PROPERTY
+  LOCATION
+}
+
+type SearchResult {
+  property: Property!
+  similarity: Float!
+  # Optional: Add highlighted matches
+  highlights: [String!]
+}
+
+type SearchResultEdge {
+  cursor: String!
+  node: SearchResult!
+}
+
+type SearchResultConnection {
+  edges: [SearchResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input SearchFilter {
+  # Filter by result type
+  types: [SearchResultType!]
+  
+  # Location-based filtering
+  nearLocation: LocationFilter
+  
+  # Property-specific filters
+  propertyTypes: [PropertyType!]
+  priceRange: PriceFilter
+  
+  # Minimum similarity score (0-1)
+  minSimilarity: Float
 }
