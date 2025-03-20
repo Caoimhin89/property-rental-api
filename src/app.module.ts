@@ -14,7 +14,7 @@ import { NearbyPlaceModule } from 'nearby-place/nearby-place.module';
 import { OrganizationModule } from './organization/organization.module';
 import { AuthModule } from './auth/auth.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
-
+import { SearchModule } from './search/search.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -35,6 +35,7 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
     OrganizationModule,
     MaintenanceModule,
     AuthModule,
+    SearchModule,
   ],
 })
 export class AppModule {}
