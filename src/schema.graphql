@@ -663,7 +663,7 @@ input PropertyFilter {
   amenities: AmenitiesFilter
   
   # Keywords search
-  searchTerm: String        # Search in name, description
+  searchTerm: String # Search in name, description
   
   # Date based filters
   createdAfter: DateTime
