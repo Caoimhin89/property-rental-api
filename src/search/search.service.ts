@@ -12,6 +12,11 @@ export interface ISearchResult {
   highlights: string[];
 }
 
+interface SearchCursor {
+  similarity: number;
+  propertyId: string;
+}
+
 @Injectable()
 export class SearchService {
   constructor(
@@ -28,16 +33,22 @@ export class SearchService {
     const limit = (first ?? last ?? 10) + 1;
     const isBackward = !!last;
     
-    let cursorSimilarity = 1.0;
+    let cursor: SearchCursor | null = null;
     if (after) {
-      cursorSimilarity = this.decodeCursor(after);
+      cursor = this.decodeCursor(after);
     } else if (before) {
-      cursorSimilarity = this.decodeCursor(before);
+      cursor = this.decodeCursor(before);
     }
 
     const results = await this.propertyRepository.query(
-      'SELECT * FROM search_properties($1, $2, $3, $4)',
-      [term, cursorSimilarity, limit, isBackward]
+      'SELECT * FROM search_properties($1, $2, $3, $4, $5)',
+      [
+        term, 
+        cursor?.similarity ?? 1.0,
+        cursor?.propertyId ?? null,
+        limit, 
+        isBackward
+      ]
     );
 
     let hasNextPage = false;
@@ -57,7 +68,10 @@ export class SearchService {
     const orderedResults = last ? results.reverse() : results;
 
     const edges = orderedResults.map(result => ({
-      cursor: this.encodeCursor(result.similarity),
+      cursor: this.encodeCursor({
+        similarity: result.similarity,
+        propertyId: result.property_id
+      }),
       node: {
         propertyId: result.property_id,
         similarity: result.similarity,
@@ -81,11 +95,11 @@ export class SearchService {
     return searchResult as unknown as SearchResultType;
   }
 
-  private encodeCursor(similarity: number): string {
-    return Buffer.from(similarity.toString()).toString('base64');
+  private encodeCursor(cursor: SearchCursor): string {
+    return Buffer.from(JSON.stringify(cursor)).toString('base64');
   }
 
-  private decodeCursor(cursor: string): number {
-    return parseFloat(Buffer.from(cursor, 'base64').toString());
+  private decodeCursor(cursor: string): SearchCursor {
+    return JSON.parse(Buffer.from(cursor, 'base64').toString());
   }
 } 
