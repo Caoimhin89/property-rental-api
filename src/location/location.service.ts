@@ -15,4 +15,15 @@ export class LocationService {
       where: { property: { id: propertyId } },
     });
   }
+
+  async searchLocations(searchTerm: string): Promise<Location[]> {
+    return this.locationRepository
+      .createQueryBuilder('location')
+      .where(`location.id IN (
+        SELECT * FROM search_locations(:searchTerm)
+      )`, { searchTerm })
+      .orderBy('similarity', 'DESC')
+      .take(5)
+      .getMany();
+  }
 } 
