@@ -1,5 +1,9 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Enable PostGIS extension
+CREATE EXTENSION IF NOT EXISTS postgis;
+-- Enable trigram extension
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Enum Types
 CREATE TYPE property_type AS ENUM ('APARTMENT', 'HOUSE', 'CONDO', 'VILLA', 'OTHER');
@@ -48,6 +52,18 @@ CREATE TABLE properties (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+-- Search vector column to properties table
+ALTER TABLE properties 
+ADD COLUMN search_vector tsvector
+GENERATED ALWAYS AS (
+  setweight(to_tsvector('english', coalesce(name,'')), 'A') ||
+  setweight(to_tsvector('english', coalesce(description,'')), 'B')
+) STORED;
+-- GIN index for full text search
+CREATE INDEX idx_properties_search ON properties USING gin(search_vector);
+-- trigram indexes for fuzzy matching
+CREATE INDEX idx_properties_name_trgm ON properties USING gin (name gin_trgm_ops);
+CREATE INDEX idx_properties_description_trgm ON properties USING gin (description gin_trgm_ops);
 
 -- Nearby Places Table
 CREATE TABLE nearby_places (
@@ -58,9 +74,6 @@ CREATE TABLE nearby_places (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
--- Enable PostGIS extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- Locations Table
 CREATE TABLE locations (
@@ -84,9 +97,125 @@ CREATE TABLE locations (
         (property_id IS NULL AND nearby_place_id IS NOT NULL)
     )
 );
-
--- Create spatial index
+-- Add search vector column
+ALTER TABLE locations 
+ADD COLUMN search_vector tsvector
+GENERATED ALWAYS AS (
+  setweight(to_tsvector('english', coalesce(address,'')), 'A') ||
+  setweight(to_tsvector('english', coalesce(city,'')), 'A') ||
+  setweight(to_tsvector('english', coalesce(county,'')), 'B') ||
+  setweight(to_tsvector('english', coalesce(state,'')), 'B') ||
+  setweight(to_tsvector('english', coalesce(postal_code,'')), 'C')
+) STORED;
+-- Create indices
 CREATE INDEX idx_locations_coordinates ON locations USING GIST(coordinates);
+CREATE INDEX idx_locations_search ON locations USING gin(search_vector);
+CREATE INDEX idx_locations_address_trgm ON locations USING gin (address gin_trgm_ops);
+CREATE INDEX idx_locations_city_trgm ON locations USING gin (city gin_trgm_ops);
+
+CREATE OR REPLACE FUNCTION search_locations(search_term text, limit_val int DEFAULT 5)
+RETURNS TABLE (
+  id uuid,
+  address text,
+  city text,
+  state text,
+  similarity float
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    l.id,
+    l.address,
+    l.city,
+    l.state,
+    greatest(
+      similarity(l.address, search_term),
+      similarity(l.city, search_term),
+      ts_rank(l.search_vector, websearch_to_tsquery('english', search_term))
+    ) as similarity_score
+  FROM locations l
+  WHERE l.search_vector @@ websearch_to_tsquery('english', search_term)
+     OR l.address % search_term
+     OR l.city % search_term
+  ORDER BY similarity_score DESC
+  LIMIT limit_val;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TYPE search_result AS (
+  id uuid,
+  name text,
+  description text,
+  address text,
+  city text,
+  state text,
+  similarity float,
+  result_type text
+);
+
+CREATE OR REPLACE FUNCTION search_properties(search_term text, limit_val int DEFAULT 5)
+RETURNS TABLE (
+  id uuid,
+  name text,
+  description text,
+  address text,
+  city text,
+  state text,
+  similarity float,
+  result_type text
+) AS $$
+BEGIN
+  RETURN QUERY
+  WITH property_matches AS (
+    SELECT 
+      p.id,
+      p.name,
+      p.description,
+      l.address,
+      l.city,
+      l.state,
+      greatest(
+        similarity(p.name, search_term) * 2.0, -- Weight name matches higher
+        similarity(p.description, search_term),
+        ts_rank(p.search_vector, websearch_to_tsquery('english', search_term))
+      ) as similarity_score,
+      'property'::text as result_type
+    FROM properties p
+    LEFT JOIN locations l ON l.property_id = p.id
+    WHERE p.search_vector @@ websearch_to_tsquery('english', search_term)
+       OR p.name % search_term
+       OR p.description % search_term
+  ),
+  location_matches AS (
+    SELECT 
+      p.id,
+      p.name,
+      p.description,
+      l.address,
+      l.city,
+      l.state,
+      greatest(
+        similarity(l.address, search_term),
+        similarity(l.city, search_term),
+        ts_rank(l.search_vector, websearch_to_tsquery('english', search_term))
+      ) as similarity_score,
+      'location'::text as result_type
+    FROM locations l
+    JOIN properties p ON p.id = l.property_id
+    WHERE l.search_vector @@ websearch_to_tsquery('english', search_term)
+       OR l.address % search_term
+       OR l.city % search_term
+  )
+  SELECT *
+  FROM (
+    SELECT * FROM property_matches
+    UNION ALL
+    SELECT * FROM location_matches
+  ) combined_results
+  ORDER BY similarity_score DESC
+  LIMIT limit_val;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Amenities Table
 CREATE TABLE amenities (
