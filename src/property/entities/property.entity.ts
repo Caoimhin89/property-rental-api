@@ -70,6 +70,14 @@ export class Property {
   })
   propertyType: PropertyType;
 
+  // for advanced search
+  @Column({ type: 'tsvector', select: false, nullable: true })
+  searchVector?: string;
+
+  // Virtual field for search score
+  @Column({ type: 'float', select: false, nullable: true })
+  searchSimilarity?: number;
+
   @Column('decimal', { precision: 10, scale: 2, name: 'base_price', transformer: {
     to: (value: number) => value,
     from: (value: string) => parseFloat(value)
