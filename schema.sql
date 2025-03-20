@@ -153,67 +153,91 @@ CREATE TYPE search_result AS (
   result_type text
 );
 
-CREATE OR REPLACE FUNCTION search_properties(search_term text, limit_val int DEFAULT 5)
-RETURNS TABLE (
-  id uuid,
-  name text,
-  description text,
-  address text,
-  city text,
-  state text,
+CREATE OR REPLACE FUNCTION search_properties(
+  search_term text,
+  cursor_similarity float DEFAULT 1.0,
+  limit_val int DEFAULT 5,
+  is_backward boolean DEFAULT false
+) RETURNS TABLE (
+  property_id uuid,
   similarity float,
-  result_type text
+  highlights text[],
+  total_count bigint
 ) AS $$
 BEGIN
   RETURN QUERY
-  WITH property_matches AS (
+  WITH all_matches AS (
+    -- First get all possible matches to calculate total count
     SELECT 
       p.id,
-      p.name,
-      p.description,
-      l.address,
-      l.city,
-      l.state,
       greatest(
-        similarity(p.name, search_term) * 2.0, -- Weight name matches higher
+        similarity(p.name, search_term) * 2.0,
         similarity(p.description, search_term),
         ts_rank(p.search_vector, websearch_to_tsquery('english', search_term))
       ) as similarity_score,
-      'property'::text as result_type
+      CASE 
+        WHEN p.name % search_term THEN 'name: ' || p.name
+        WHEN p.description % search_term THEN 'description: ' || substring(p.description, 1, 100) || '...'
+        ELSE NULL 
+      END as highlight
     FROM properties p
-    LEFT JOIN locations l ON l.property_id = p.id
     WHERE p.search_vector @@ websearch_to_tsquery('english', search_term)
        OR p.name % search_term
        OR p.description % search_term
-  ),
-  location_matches AS (
+    
+    UNION ALL
+    
     SELECT 
       p.id,
-      p.name,
-      p.description,
-      l.address,
-      l.city,
-      l.state,
       greatest(
         similarity(l.address, search_term),
         similarity(l.city, search_term),
         ts_rank(l.search_vector, websearch_to_tsquery('english', search_term))
       ) as similarity_score,
-      'location'::text as result_type
+      CASE 
+        WHEN l.address % search_term THEN 'address: ' || l.address
+        WHEN l.city % search_term THEN 'location: ' || l.city || ', ' || l.state
+        ELSE NULL 
+      END as highlight
     FROM locations l
     JOIN properties p ON p.id = l.property_id
     WHERE l.search_vector @@ websearch_to_tsquery('english', search_term)
        OR l.address % search_term
        OR l.city % search_term
+  ),
+  aggregated_matches AS (
+    -- Aggregate matches by property_id to get final results
+    SELECT 
+      id as property_id,
+      MAX(similarity_score) as similarity_score,
+      array_remove(array_agg(highlight), NULL) as highlights
+    FROM all_matches
+    GROUP BY id
+  ),
+  paginated_results AS (
+    -- Apply pagination
+    SELECT *
+    FROM aggregated_matches
+    WHERE CASE 
+      WHEN is_backward THEN similarity_score > cursor_similarity
+      ELSE similarity_score < cursor_similarity
+    END
+    ORDER BY similarity_score DESC
+    LIMIT limit_val
+  ),
+  total AS (
+    -- Calculate total count once
+    SELECT COUNT(DISTINCT am.property_id) as total_count
+    FROM aggregated_matches am
   )
-  SELECT *
-  FROM (
-    SELECT * FROM property_matches
-    UNION ALL
-    SELECT * FROM location_matches
-  ) combined_results
-  ORDER BY similarity_score DESC
-  LIMIT limit_val;
+  -- Return results with total count
+  SELECT 
+    r.property_id,
+    r.similarity_score as similarity,
+    r.highlights,
+    t.total_count
+  FROM paginated_results r
+  CROSS JOIN total t;
 END;
 $$ LANGUAGE plpgsql;
 
