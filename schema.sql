@@ -156,6 +156,7 @@ CREATE TYPE search_result AS (
 CREATE OR REPLACE FUNCTION search_properties(
   search_term text,
   cursor_similarity float DEFAULT 1.0,
+  cursor_property_id uuid DEFAULT NULL,
   limit_val int DEFAULT 5,
   is_backward boolean DEFAULT false
 ) RETURNS TABLE (
@@ -169,60 +170,96 @@ BEGIN
   WITH all_matches AS (
     -- First get all possible matches to calculate total count
     SELECT 
-      p.id,
+      p.id as property_id,
       greatest(
-        similarity(p.name, search_term) * 2.0,
-        similarity(p.description, search_term),
-        ts_rank(p.search_vector, websearch_to_tsquery('english', search_term))
+        -- Exact matches should have highest priority
+        CASE WHEN lower(p.name) = lower(search_term) THEN 1.0
+             WHEN lower(p.description) = lower(search_term) THEN 0.9
+             ELSE 0 END,
+        -- Then check partial matches
+        CASE WHEN lower(p.name) LIKE '%' || lower(search_term) || '%' THEN 0.8
+             WHEN lower(p.description) LIKE '%' || lower(search_term) || '%' THEN 0.7
+             ELSE 0 END,
+        -- Then use similarity for fuzzy matching
+        similarity(p.name, search_term) * 0.6,
+        similarity(p.description, search_term) * 0.5,
+        -- Full text search score
+        ts_rank(p.search_vector, websearch_to_tsquery('english', search_term)) * 0.4
       ) as similarity_score,
       CASE 
-        WHEN p.name % search_term THEN 'name: ' || p.name
-        WHEN p.description % search_term THEN 'description: ' || substring(p.description, 1, 100) || '...'
+        WHEN lower(p.name) = lower(search_term) THEN 'name (exact): ' || p.name
+        WHEN lower(p.name) LIKE '%' || lower(search_term) || '%' THEN 'name: ' || p.name
+        WHEN lower(p.description) LIKE '%' || lower(search_term) || '%' 
+          THEN 'description: ' || substring(p.description, 1, 100) || '...'
         ELSE NULL 
       END as highlight
     FROM properties p
-    WHERE p.search_vector @@ websearch_to_tsquery('english', search_term)
-       OR p.name % search_term
-       OR p.description % search_term
+    WHERE 
+      lower(p.name) = lower(search_term)
+      OR lower(p.name) LIKE '%' || lower(search_term) || '%'
+      OR lower(p.description) LIKE '%' || lower(search_term) || '%'
+      OR p.search_vector @@ websearch_to_tsquery('english', search_term)
+      OR p.name % search_term
+      OR p.description % search_term
     
     UNION ALL
     
     SELECT 
-      p.id,
+      p.id as property_id,
       greatest(
-        similarity(l.address, search_term),
-        similarity(l.city, search_term),
-        ts_rank(l.search_vector, websearch_to_tsquery('english', search_term))
+        CASE WHEN lower(l.address) = lower(search_term) THEN 0.8
+             WHEN lower(l.city) = lower(search_term) THEN 0.7
+             ELSE 0 END,
+        similarity(l.address, search_term) * 0.6,
+        similarity(l.city, search_term) * 0.5,
+        ts_rank(l.search_vector, websearch_to_tsquery('english', search_term)) * 0.4
       ) as similarity_score,
       CASE 
-        WHEN l.address % search_term THEN 'address: ' || l.address
-        WHEN l.city % search_term THEN 'location: ' || l.city || ', ' || l.state
+        WHEN lower(l.address) = lower(search_term) THEN 'address (exact): ' || l.address
+        WHEN lower(l.address) LIKE '%' || lower(search_term) || '%' THEN 'address: ' || l.address
+        WHEN lower(l.city) LIKE '%' || lower(search_term) || '%' 
+          THEN 'location: ' || l.city || ', ' || l.state
         ELSE NULL 
       END as highlight
     FROM locations l
     JOIN properties p ON p.id = l.property_id
-    WHERE l.search_vector @@ websearch_to_tsquery('english', search_term)
-       OR l.address % search_term
-       OR l.city % search_term
+    WHERE 
+      lower(l.address) = lower(search_term)
+      OR lower(l.address) LIKE '%' || lower(search_term) || '%'
+      OR lower(l.city) LIKE '%' || lower(search_term) || '%'
+      OR l.search_vector @@ websearch_to_tsquery('english', search_term)
+      OR l.address % search_term
+      OR l.city % search_term
   ),
   aggregated_matches AS (
     -- Aggregate matches by property_id to get final results
     SELECT 
-      id as property_id,
-      MAX(similarity_score) as similarity_score,
-      array_remove(array_agg(highlight), NULL) as highlights
-    FROM all_matches
-    GROUP BY id
+      am.property_id,
+      MAX(am.similarity_score) as similarity_score,
+      array_remove(array_agg(am.highlight), NULL) as highlights
+    FROM all_matches am
+    GROUP BY am.property_id
   ),
   paginated_results AS (
     -- Apply pagination
-    SELECT *
-    FROM aggregated_matches
-    WHERE CASE 
-      WHEN is_backward THEN similarity_score > cursor_similarity
-      ELSE similarity_score < cursor_similarity
-    END
-    ORDER BY similarity_score DESC
+    SELECT 
+      am.property_id,
+      am.similarity_score,
+      am.highlights
+    FROM aggregated_matches am
+    WHERE 
+      CASE 
+        WHEN cursor_similarity IS NULL THEN true
+        WHEN is_backward THEN 
+          (am.similarity_score > cursor_similarity) OR 
+          (am.similarity_score = cursor_similarity AND am.property_id > cursor_property_id)
+        ELSE 
+          (am.similarity_score < cursor_similarity) OR 
+          (am.similarity_score = cursor_similarity AND am.property_id < cursor_property_id)
+      END
+    ORDER BY 
+      am.similarity_score DESC,
+      am.property_id ASC
     LIMIT limit_val
   ),
   total AS (
@@ -232,11 +269,11 @@ BEGIN
   )
   -- Return results with total count
   SELECT 
-    r.property_id,
-    r.similarity_score as similarity,
-    r.highlights,
+    pr.property_id,
+    pr.similarity_score as similarity,
+    pr.highlights,
     t.total_count
-  FROM paginated_results r
+  FROM paginated_results pr
   CROSS JOIN total t;
 END;
 $$ LANGUAGE plpgsql;
