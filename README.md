@@ -10,17 +10,21 @@ A GraphQL API for property rentals built with NestJS, TypeORM, and PostgreSQL.
 - ⭐ Review system with ratings
 - 🔄 Cursor-based pagination
 - 📸 Property images management
-- 🏃‍♂️ Performance optimized with DataLoader pattern
+- 🏃‍♂️ Performance optimized with DataLoader pattern & caching
+- 🔔 Notifications
+- 📫 Transactional emails
 
 ## Tech Stack
 
+- **Language**: NodeJS, TypeScript
 - **Framework**: NestJS
 - **API**: GraphQL
 - **Database**: PostgreSQL
 - **ORM**: TypeORM
+- **Cache**: Redis
+- **Message Dispatcher**: Kafka
 - **Testing**: Jest
 - **Containerization**: Docker
-- **Language**: NodeJS, TypeScript
 
 ## Prerequisites
 
@@ -78,10 +82,13 @@ The application uses a comprehensive database schema including:
 - Maintenance Requests
 - Maintenance Images
 - Maintenance Comments
+- Notifications
 
 See `schema.sql` for complete database structure.
 
 ## Development
+docker compose up -d
+npm run start:dev
 
 ### Testing
 
@@ -126,6 +133,7 @@ The API uses GraphQL and includes the following main types:
 - MaintenanceRequest
 - MaintenanceImage
 - MaintenanceComment
+- Notification
 
 For detailed schema information, visit the GraphQL playground's documentation.
 
