@@ -1,17 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
 import { NotificationType } from './entities/notification.entity';
-import { KafkaService } from '../kafka/kafka.service';
+import { ClientKafka } from '@nestjs/microservices';
 import { NotificationFilter, PaginationInput } from '../graphql';
+
 @Injectable()
-export class NotificationService {
+export class NotificationService implements OnModuleInit {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
-    private readonly kafkaService: KafkaService,
+    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
   ) {}
+
+  async onModuleInit() {
+    // Subscribe to response topics
+    this.kafkaClient.subscribeToResponseOf('notifications.created');
+    this.kafkaClient.subscribeToResponseOf('notifications.updated');
+    await this.kafkaClient.connect();
+  }
+
+  async publish(topic: string, message: any) {
+    return this.kafkaClient.emit(topic, {
+      key: message.userId,
+      value: message,
+      headers: {
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
 
   async create(data: {
     userId: string;
@@ -25,7 +43,7 @@ export class NotificationService {
     const savedNotification = await this.notificationRepository.save(notification);
 
     // Publish to Kafka for real-time updates
-    await this.kafkaService.publish('notifications.created', {
+    await this.publish('notifications.created', {
       userId: data.userId,
       notification: savedNotification,
     });
@@ -88,7 +106,7 @@ export class NotificationService {
     notification.isRead = true;
     const updatedNotification = await this.notificationRepository.save(notification);
 
-    await this.kafkaService.publish('notifications.updated', {
+    await this.publish('notifications.updated', {
       userId: notification.userId,
       notification: updatedNotification,
     });
@@ -102,7 +120,7 @@ export class NotificationService {
       { isRead: true }
     );
 
-    await this.kafkaService.publish('notifications.bulk_updated', {
+    await this.publish('notifications.bulk_updated', {
       userId,
       action: 'MARK_ALL_READ',
     });
