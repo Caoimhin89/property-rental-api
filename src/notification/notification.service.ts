@@ -121,14 +121,9 @@ export class NotificationService {
     type: NotificationType,
   ): Promise<Notification> {
     const templates = {
-      [NotificationType.BOOKING_REQUESTED]: {
-        title: 'New Booking Request',
-        description: 'You have received a new booking request',
-        linkText: 'View Booking',
-      },
-      [NotificationType.BOOKING_APPROVED]: {
-        title: 'Booking Approved',
-        description: 'Your booking request has been approved',
+      [NotificationType.BOOKING_CONFIRMED]: {
+        title: 'Booking Confirmed',
+        description: 'Your booking has been confirmed',
         linkText: 'View Booking',
       },
       [NotificationType.BOOKING_REJECTED]: {
@@ -148,7 +143,7 @@ export class NotificationService {
       },
       [NotificationType.BOOKING_CHECKIN]: {
         title: 'Booking Check-In',
-        description: 'Your booking has been checked in',
+        description: 'You have checked in to your booking',
         linkText: 'View Booking',
       },
       [NotificationType.BOOKING_CHECKOUT]: {
