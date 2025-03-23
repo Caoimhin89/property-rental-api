@@ -504,6 +504,10 @@ export abstract class IMutation {
     abstract addMaintenanceComment(input: CreateMaintenanceCommentInput): MaintenanceComment | Promise<MaintenanceComment>;
 
     abstract addMaintenanceImage(input: CreateMaintenanceImageInput): MaintenanceImage | Promise<MaintenanceImage>;
+
+    abstract markNotificationAsRead(id: string): Notification | Promise<Notification>;
+
+    abstract markAllNotificationsAsRead(userId: string): boolean | Promise<boolean>;
 }
 
 export abstract class IQuery {

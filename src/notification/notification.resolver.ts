@@ -29,4 +29,15 @@ export class NotificationResolver {
       })),
     }
   }
+
+  @Mutation(() => NotificationType)
+  async markNotificationAsRead(@Args('id') id: string): Promise<NotificationType> {
+    return await this.notificationService.markAsRead(id);
+  }
+
+  @Mutation(() => Boolean)
+  async markAllNotificationsAsRead(@Args('userId') userId: string): Promise<boolean> {
+    await this.notificationService.markAllAsRead(userId);
+    return true;
+  }
 } 

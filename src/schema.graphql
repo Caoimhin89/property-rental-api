@@ -240,6 +240,10 @@ type Mutation {
   updateMaintenanceRequest(id: ID!, input: UpdateMaintenanceRequestInput!): MaintenanceRequest!
   addMaintenanceComment(input: CreateMaintenanceCommentInput!): MaintenanceComment!
   addMaintenanceImage(input: CreateMaintenanceImageInput!): MaintenanceImage!
+
+  ## Notification Mutations
+  markNotificationAsRead(id: ID!): Notification!
+  markAllNotificationsAsRead(userId: ID!): Boolean!
 }
 
 # Query Types
