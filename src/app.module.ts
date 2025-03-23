@@ -18,6 +18,7 @@ import { AuthModule } from './auth/auth.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { SearchModule } from './search/search.module';
 import { KafkaModule } from './kafka/kafka.module';
+import { NotificationModule } from './notification/notification.module';
 @Module({
   imports: [
     CacheModule.registerAsync({
@@ -50,6 +51,7 @@ import { KafkaModule } from './kafka/kafka.module';
     AuthModule,
     SearchModule,
     KafkaModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}
