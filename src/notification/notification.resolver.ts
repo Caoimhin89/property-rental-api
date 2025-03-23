@@ -11,7 +11,7 @@ export class NotificationResolver {
 
   @Query(() => NotificationType, { nullable: true })
   async notification(@Args('id') id: string): Promise<NotificationType | null> {
-    return await this.notificationService.getById;
+    return await this.notificationService.getById(id);
   }
 
   @Query(() => NotificationConnection)
@@ -19,7 +19,7 @@ export class NotificationResolver {
     @Args('userId') userId: string,
     @Args('filter', { nullable: true }) filter?: NotificationFilter,
     @Args('pagination', { nullable: true }) pagination?: PaginationInput) {
-    const connection = await this.notificationService.findAll({ userId, filter, pagination });
+    const connection = await this.notificationService.findAll(userId, filter, pagination);
     return {
       totalCount: connection.totalCount,
       pageInfo: connection.pageInfo,

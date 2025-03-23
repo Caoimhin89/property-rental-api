@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
 import { NotificationType } from './entities/notification.entity';
 import { KafkaService } from '../kafka/kafka.service';
-
+import { NotificationFilter, PaginationInput } from '../graphql';
 @Injectable()
 export class NotificationService {
   constructor(
@@ -33,15 +33,10 @@ export class NotificationService {
     return savedNotification;
   }
 
-  async findAll({ 
-    userId, 
-    filter, 
-    pagination 
-  }: {
-    userId: string;
-    filter?: { read?: boolean };
-    pagination?: { after?: string; first?: number };
-  }) {
+  async findAll(
+    userId: string,
+    filter?: NotificationFilter,
+    pagination?: PaginationInput) {
     const query = this.notificationRepository.createQueryBuilder('notification')
       .where('notification.userId = :userId', { userId })
       .orderBy('notification.createdAt', 'DESC');

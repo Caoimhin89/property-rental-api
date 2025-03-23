@@ -147,6 +147,6 @@ INSERT INTO maintenance_images (id, maintenance_request_id, url, created_at, upd
 ('e1f2a3b4-5678-9012-34c9-012345678901'::uuid, 'e9f0a1b2-3456-7890-12cd-ef0123456789'::uuid, 'https://example.com/maintenance/wall-after.jpg', CURRENT_TIMESTAMP - INTERVAL '8 days', CURRENT_TIMESTAMP); 
 
 -- Notifications
-INSERT INTO notifications (id, user_id, title, description, link, link_text, is_read, created_at, updated_at) VALUES
-('26bf8b80-26d5-466c-ab5c-7e23a9cffeea'::uuid, '04ef4013-4da7-4a73-b024-0548fb5f9511'::uuid, 'Pool Maintenance Reminder', 'Don''t forget to clean the pool this weekend!', 'https://example.com/maintenance/pool', 'View Pool Maintenance', FALSE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('4d308044-5d47-476a-ab91-cba5f4060eff'::uuid, 'dce2e155-6e65-4dd1-b3ec-1496021e31fa'::uuid, 'AC Repair Completed', 'Your AC repair is complete. Enjoy your cool home!', 'https://example.com/maintenance/ac', 'View AC Repair', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO notifications (id, user_id, title, description, type, link, link_text, is_read, created_at, updated_at) VALUES
+('26bf8b80-26d5-466c-ab5c-7e23a9cffeea'::uuid, '04ef4013-4da7-4a73-b024-0548fb5f9511'::uuid, 'Pool Maintenance Reminder', 'Air conditioner is not working!', 'MAINTENANCE_REQUEST_CREATED', 'https://example.com/maintenance/ac', 'View Maintenance Request', FALSE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('4d308044-5d47-476a-ab91-cba5f4060eff'::uuid, 'dce2e155-6e65-4dd1-b3ec-1496021e31fa'::uuid, 'AC Repair Completed', 'Your AC repair is complete. Enjoy your cool home!', 'MAINTENANCE_REQUEST_COMPLETED', 'https://example.com/maintenance/ac', 'View Maintenance Request', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

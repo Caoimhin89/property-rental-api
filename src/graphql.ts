@@ -54,6 +54,34 @@ export enum MaintenanceRequestUrgency {
     HIGH = "HIGH"
 }
 
+export enum NotificationType {
+    BOOKING_REQUESTED = "BOOKING_REQUESTED",
+    BOOKING_APPROVED = "BOOKING_APPROVED",
+    BOOKING_REJECTED = "BOOKING_REJECTED",
+    BOOKING_CANCELLED = "BOOKING_CANCELLED",
+    BOOKING_PAYMENT = "BOOKING_PAYMENT",
+    BOOKING_CHECKIN = "BOOKING_CHECKIN",
+    BOOKING_CHECKOUT = "BOOKING_CHECKOUT",
+    REVIEW_REQUESTED = "REVIEW_REQUESTED",
+    REVIEW_REMINDER = "REVIEW_REMINDER",
+    REVIEW_FOLLOWUP = "REVIEW_FOLLOWUP",
+    REVIEW_PUBLISHED = "REVIEW_PUBLISHED",
+    PROPERTY_CREATED = "PROPERTY_CREATED",
+    PROPERTY_APPROVAL_REQUIRED = "PROPERTY_APPROVAL_REQUIRED",
+    PROPERTY_APPROVAL_REQUIRED_REMINDER = "PROPERTY_APPROVAL_REQUIRED_REMINDER",
+    PROPERTY_APPROVED = "PROPERTY_APPROVED",
+    PROPERTY_REJECTED = "PROPERTY_REJECTED",
+    MAINTENANCE_REQUEST_CREATED = "MAINTENANCE_REQUEST_CREATED",
+    MAINTENANCE_REQUEST_UPDATED = "MAINTENANCE_REQUEST_UPDATED",
+    MAINTENANCE_REQUEST_COMPLETED = "MAINTENANCE_REQUEST_COMPLETED",
+    MAINTENANCE_REQUEST_CANCELLED = "MAINTENANCE_REQUEST_CANCELLED",
+    ORGANIZATION_INVITATION = "ORGANIZATION_INVITATION",
+    ORGANIZATION_INVITATION_REMINDER = "ORGANIZATION_INVITATION_REMINDER",
+    ORGANIZATION_MEMBER_ADDED = "ORGANIZATION_MEMBER_ADDED",
+    ORGANIZATION_MEMBER_REMOVED = "ORGANIZATION_MEMBER_REMOVED",
+    OTHER = "OTHER"
+}
+
 export enum BookingStatus {
     PENDING = "PENDING",
     CONFIRMED = "CONFIRMED",
@@ -523,6 +551,8 @@ export abstract class IQuery {
 
     abstract search(term: string, pagination?: Nullable<PaginationInput>, filters?: Nullable<SearchFilter>): SearchResultConnection | Promise<SearchResultConnection>;
 
+    abstract notification(id: string): Nullable<Notification> | Promise<Nullable<Notification>>;
+
     abstract notifications(userId: string, filter?: Nullable<NotificationFilter>, pagination?: Nullable<PaginationInput>): NotificationConnection | Promise<NotificationConnection>;
 }
 
@@ -769,6 +799,7 @@ export class Notification {
     id: string;
     title: string;
     description: string;
+    type: NotificationType;
     link: string;
     linkText: string;
     isRead: boolean;

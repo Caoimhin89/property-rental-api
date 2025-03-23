@@ -285,6 +285,7 @@ type Query {
     pagination: PaginationInput,
     filters: SearchFilter
   ): SearchResultConnection!
+  notification(id: ID!): Notification
   notifications(
     userId: ID!,
     filter: NotificationFilter,
@@ -599,6 +600,10 @@ enum NotificationType {
   PROPERTY_APPROVAL_REQUIRED_REMINDER
   PROPERTY_APPROVED
   PROPERTY_REJECTED
+  MAINTENANCE_REQUEST_CREATED
+  MAINTENANCE_REQUEST_UPDATED
+  MAINTENANCE_REQUEST_COMPLETED
+  MAINTENANCE_REQUEST_CANCELLED
   ORGANIZATION_INVITATION
   ORGANIZATION_INVITATION_REMINDER
   ORGANIZATION_MEMBER_ADDED
