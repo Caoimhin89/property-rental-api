@@ -425,8 +425,10 @@ CREATE TABLE notifications (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-
 -- Indexes
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_notifications_type ON notifications(type);
+CREATE INDEX idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX idx_bookings_confirmation_code ON bookings(confirmation_code);
 CREATE INDEX idx_maintenance_request_comments_maintenance_request ON maintenance_request_comments(maintenance_request_id);
 CREATE INDEX idx_maintenance_request_comments_user ON maintenance_request_comments(user_id);
