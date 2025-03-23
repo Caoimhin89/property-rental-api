@@ -278,6 +278,10 @@ export class CreateMaintenanceImageInput {
     url: string;
 }
 
+export class NotificationFilter {
+    read?: Nullable<boolean>;
+}
+
 export class PropertyFilter {
     propertyType?: Nullable<PropertyType[]>;
     price?: Nullable<PriceFilter>;
@@ -518,6 +522,8 @@ export abstract class IQuery {
     abstract maintenanceRequests(propertyId?: Nullable<string>, status?: Nullable<MaintenanceRequestStatus>, pagination?: Nullable<PaginationInput>): MaintenanceRequestConnection | Promise<MaintenanceRequestConnection>;
 
     abstract search(term: string, pagination?: Nullable<PaginationInput>, filters?: Nullable<SearchFilter>): SearchResultConnection | Promise<SearchResultConnection>;
+
+    abstract notifications(userId: string, filter?: Nullable<NotificationFilter>, pagination?: Nullable<PaginationInput>): NotificationConnection | Promise<NotificationConnection>;
 }
 
 export class Property {
@@ -758,6 +764,31 @@ export class ReviewEdge {
     node: Review;
 }
 
+export class Notification {
+    __typename?: 'Notification';
+    id: string;
+    title: string;
+    description: string;
+    link: string;
+    linkText: string;
+    isRead: boolean;
+    createdAt: DateTime;
+    updatedAt: DateTime;
+}
+
+export class NotificationConnection {
+    __typename?: 'NotificationConnection';
+    edges: NotificationEdge[];
+    pageInfo: PageInfo;
+    totalCount: number;
+}
+
+export class NotificationEdge {
+    __typename?: 'NotificationEdge';
+    cursor: string;
+    node: Notification;
+}
+
 export class User {
     __typename?: 'User';
     id: string;
@@ -767,6 +798,7 @@ export class User {
     bookings?: BookingConnection;
     maintenanceRequests?: MaintenanceRequestConnection;
     organization?: Nullable<Organization>;
+    notifications?: NotificationConnection;
     createdAt: DateTime;
     updatedAt: DateTime;
 }

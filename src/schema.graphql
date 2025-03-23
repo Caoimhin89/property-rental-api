@@ -285,6 +285,10 @@ type Query {
     pagination: PaginationInput,
     filters: SearchFilter
   ): SearchResultConnection!
+  notifications(
+    userId: ID!,
+    filter: NotificationFilter,
+    pagination: PaginationInput): NotificationConnection!
 }
 
 # Scalar Types
@@ -574,6 +578,58 @@ type ReviewEdge {
   node: Review!
 }
 
+input NotificationFilter {
+  read: Boolean
+}
+
+enum NotificationType {
+  BOOKING_REQUESTED
+  BOOKING_APPROVED
+  BOOKING_REJECTED
+  BOOKING_CANCELLED
+  BOOKING_PAYMENT
+  BOOKING_CHECKIN
+  BOOKING_CHECKOUT
+  REVIEW_REQUESTED
+  REVIEW_REMINDER
+  REVIEW_FOLLOWUP
+  REVIEW_PUBLISHED
+  PROPERTY_CREATED
+  PROPERTY_APPROVAL_REQUIRED
+  PROPERTY_APPROVAL_REQUIRED_REMINDER
+  PROPERTY_APPROVED
+  PROPERTY_REJECTED
+  ORGANIZATION_INVITATION
+  ORGANIZATION_INVITATION_REMINDER
+  ORGANIZATION_MEMBER_ADDED
+  ORGANIZATION_MEMBER_REMOVED
+  OTHER  
+}
+
+type Notification {
+  id: ID!
+  title: String!
+  description: String!
+  type: NotificationType!
+  link: String!
+  linkText: String!
+  isRead: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type NotificationConnection {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type NotificationEdge {
+  cursor: String!
+  node: Notification!
+}
+
+
 type User {
   id: ID!
   name: String!
@@ -585,6 +641,9 @@ type User {
     pagination: PaginationInput
   ): MaintenanceRequestConnection!
   organization: Organization
+  notifications(
+    filter: NotificationFilter,
+    pagination: PaginationInput): NotificationConnection!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
