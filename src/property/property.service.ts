@@ -12,7 +12,8 @@ import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { LoggerService } from '../common/services/logger.service';
 import { PropertyNotFoundException, PropertyUnauthorizedException } from './property.errors';
 import { CacheService } from '../cache/cache.service';
-import Keyv from 'keyv';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CacheSetEvent, CacheInvalidateEvent } from '../cache/cache.events';
 
 interface PropertyEntityConnection {
   edges: {
@@ -25,8 +26,6 @@ interface PropertyEntityConnection {
 
 @Injectable()
 export class PropertyService {
-  private cache: Keyv;
-
   constructor(
     @InjectRepository(PropertyEntity)
     private readonly propertyRepository: Repository<PropertyEntity>,
@@ -36,34 +35,32 @@ export class PropertyService {
     private readonly priceRuleRepository: Repository<PriceRule>,
     private readonly logger: LoggerService,
     private readonly cacheService: CacheService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.logger.debug('PropertyService initialized', 'PropertyService');
-    this.cache = this.cacheService.getNamespacedCache('property', (60000 * 5));
   }
 
   async findById(id: string): Promise<PropertyEntity | null> {
     const cacheKey = this.cacheService.generateCacheKey('single', id);
-    try {
-      const cached = await this.cache.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
+    
+    // Synchronous cache check
+    const cached = await this.cacheService.get<PropertyEntity>('property', cacheKey);
+    if (cached) return cached;
 
-      const property = await this.propertyRepository.findOne({
-        where: { id }
-      });
+    const property = await this.propertyRepository.findOne({
+      where: { id }
+    });
 
-      if (property) {
-        await this.cache.set(cacheKey, JSON.stringify(property));
-      }
-
-      return property || null;
-    } catch (error) {
-      this.logger.error('Cache operation failed', 'PropertyService', error);
-      return this.propertyRepository.findOne({
-        where: { id }
-      });
+    if (property) {
+      // Asynchronous cache set
+      this.eventEmitter.emit('cache.set', new CacheSetEvent(
+        'property',
+        cacheKey,
+        property
+      ));
     }
+
+    return property;
   }
 
   async findByIds(ids: string[]): Promise<PropertyType[]> {
@@ -80,10 +77,10 @@ export class PropertyService {
     const cacheKey = this.cacheService.generateCacheKey('list', args);
     
     try {
-      const cached = await this.cache.get(cacheKey);
+      const cached = await this.cacheService.get<PropertyEntityConnection>('property', cacheKey);
       if (cached) {
         this.logger.debug('Cache hit', 'PropertyService', { cacheKey });
-        return JSON.parse(cached);
+        return cached;
       }
 
       const { filter, pagination } = args;
@@ -114,7 +111,12 @@ export class PropertyService {
       const [properties, totalCount] = await qb.getManyAndCount();
       const connection = this.createPropertyConnection(properties, totalCount, pagination);
 
-      await this.cache.set(cacheKey, JSON.stringify(connection));
+      // Asynchronous cache set
+      this.eventEmitter.emit('cache.set', new CacheSetEvent(
+        'property',
+        cacheKey,
+        connection
+      ));
       
       return connection;
     } catch (error) {
@@ -155,10 +157,10 @@ export class PropertyService {
   ) {
     const cacheKey = this.cacheService.generateCacheKey('list', { organizationId, pagination });
     try {
-      const cached = await this.cache.get(cacheKey);
+      const cached = await this.cacheService.get<PropertyEntityConnection>('property', cacheKey);
       if (cached) {
         this.logger.debug('Cache hit', 'PropertyService', { cacheKey });
-        return JSON.parse(cached);
+        return cached;
       }
     } catch (error) {
       this.logger.error('Cache operation failed', 'PropertyService', error);
@@ -180,7 +182,13 @@ export class PropertyService {
     const [properties, totalCount] = await qb.getManyAndCount();
     // Always return a valid connection, even if empty
     const connection = this.createPropertyConnection(properties || [], totalCount, { first, last });
-    await this.cache.set(cacheKey, JSON.stringify(connection));
+    
+    // Asynchronous cache set
+    this.eventEmitter.emit('cache.set', new CacheSetEvent(
+      'property',
+      cacheKey,
+      connection
+    ));
     return connection;
   }
 
@@ -297,7 +305,15 @@ export class PropertyService {
     const savedProperty = await this.propertyRepository.save(property);
     const { location: _, ...propertyWithoutLocation } = savedProperty;
     
-    await this.invalidatePropertyCache();
+    // Asynchronous cache invalidation
+    this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
+      'property',
+      'single:*'
+    ));
+    this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
+      'property',
+      'list:*'
+    ));
     
     return propertyWithoutLocation;
   }
@@ -363,7 +379,17 @@ export class PropertyService {
         })
       });
       const savedProperty = await this.propertyRepository.save(updatedProperty);
-      await this.invalidatePropertyCache(id);
+      
+      // Asynchronous cache invalidation
+      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
+        'property',
+        'single:*'
+      ));
+      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
+        'property',
+        'list:*'
+      ));
+
       return savedProperty;
     } catch (error: any) {
       this.logger.error('Error updating property', 'PropertyService', error);
@@ -374,7 +400,15 @@ export class PropertyService {
   async remove(id: string): Promise<boolean> {
     const result = await this.propertyRepository.delete(id);
     if (result.affected) {
-      await this.invalidatePropertyCache(id);
+      // Asynchronous cache invalidation
+      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
+        'property',
+        'single:*'
+      ));
+      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
+        'property',
+        'list:*'
+      ));
     }
     return result.affected ? result.affected > 0 : false;
   }
@@ -836,19 +870,6 @@ export class PropertyService {
       if (last) {
         qb.take(last);
       }
-    }
-  }
-
-  private async invalidatePropertyCache(propertyId?: string) {
-    try {
-      if (propertyId) {
-        const propertyKey = this.cacheService.generateCacheKey('single', propertyId);
-        await this.cache.delete(propertyKey);
-      }
-      await this.cache.delete('properties:*');
-      this.logger.debug('Cache invalidated', 'PropertyService', { propertyId });
-    } catch (error) {
-      this.logger.error('Cache invalidation failed', 'PropertyService', error);
     }
   }
 } 

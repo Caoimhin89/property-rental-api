@@ -3,50 +3,60 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Location } from './entities/location.entity';
 import { CacheService } from '../cache/cache.service';
-import Keyv from 'keyv';
 import { LoggerService } from '../common/services/logger.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CacheSetEvent, CacheInvalidateEvent } from '../cache/cache.events';
+
 @Injectable()
 export class LocationService {
-  private cache: Keyv;
+  private readonly NAMESPACE = 'location';
+  private readonly TTL = 60000 * 5; // 5 minutes
 
   constructor(
     @InjectRepository(Location)
     private locationRepository: Repository<Location>,
     private readonly cacheService: CacheService,
     private readonly logger: LoggerService,
-  ) {
-    this.cache = this.cacheService.getNamespacedCache('location', (60000 * 5));
-  }
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async findByPropertyId(propertyId: string): Promise<Location | null> {
     const cacheKey = this.cacheService.generateCacheKey('single', propertyId);
-    try {
-      const cached = await this.cache.get(cacheKey);
-      if (cached) {
-        this.logger.debug('Cache hit', 'LocationService', { cacheKey });
-        return JSON.parse(cached);
-      }
-    } catch (error) {
-      this.logger.error('Cache operation failed', 'LocationService', error);
+    
+    // Synchronous cache check
+    const cached = await this.cacheService.get<Location>(this.NAMESPACE, cacheKey);
+    if (cached) {
+      this.logger.debug('Cache hit', 'LocationService', { cacheKey });
+      return cached;
     }
+
     const location = await this.locationRepository.findOne({
       where: { property: { id: propertyId } },
     });
-    await this.cache.set(cacheKey, JSON.stringify(location));
+
+    if (location) {
+      // Asynchronous cache set
+      this.eventEmitter.emit('cache.set', new CacheSetEvent(
+        this.NAMESPACE,
+        cacheKey,
+        location,
+        this.TTL
+      ));
+    }
+
     return location;
   }
 
   async searchLocations(searchTerm: string): Promise<Location[]> {
     const cacheKey = this.cacheService.generateCacheKey('list', { searchTerm });
-    try {
-      const cached = await this.cache.get(cacheKey);
-      if (cached) {
-        this.logger.debug('Cache hit', 'LocationService', { cacheKey });
-        return JSON.parse(cached);
-      }
-    } catch (error) {
-      this.logger.error('Cache operation failed', 'LocationService', error);
+    
+    // Synchronous cache check
+    const cached = await this.cacheService.get<Location[]>(this.NAMESPACE, cacheKey);
+    if (cached) {
+      this.logger.debug('Cache hit', 'LocationService', { cacheKey });
+      return cached;
     }
+
     const locations = await this.locationRepository
       .createQueryBuilder('location')
       .where(`location.id IN (
@@ -55,7 +65,34 @@ export class LocationService {
       .orderBy('similarity', 'DESC')
       .take(5)
       .getMany();
-    await this.cache.set(cacheKey, JSON.stringify(locations));
+
+    if (locations.length > 0) {
+      // Asynchronous cache set
+      this.eventEmitter.emit('cache.set', new CacheSetEvent(
+        this.NAMESPACE,
+        cacheKey,
+        locations,
+        this.TTL
+      ));
+    }
+
     return locations;
+  }
+
+  // Method to invalidate location cache (call this when locations are updated)
+  async invalidateCache(propertyId?: string) {
+    if (propertyId) {
+      // Invalidate specific location
+      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
+        this.NAMESPACE,
+        `single:${propertyId}`
+      ));
+    }
+    
+    // Invalidate all search results
+    this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
+      this.NAMESPACE,
+      'list:*'
+    ));
   }
 } 

@@ -12,6 +12,7 @@ import { CommonModule } from '../common/common.module';
 import { LocationModule } from '../location/location.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { AmenityModule } from '../amenity/amenity.module';
+import { CacheModule } from '../cache/cache.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AmenityModule } from '../amenity/amenity.module';
     forwardRef(() => DataLoaderModule),
     forwardRef(() => BookingModule),
     forwardRef(() => AmenityModule),
+    forwardRef(() => CacheModule),
     CommonModule,
     LocationModule
   ],
