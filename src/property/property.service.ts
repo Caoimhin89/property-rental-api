@@ -11,6 +11,9 @@ import { PriceRule } from './entities/price-rule.entity';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { LoggerService } from '../common/services/logger.service';
 import { PropertyNotFoundException, PropertyUnauthorizedException } from './property.errors';
+import { createHash } from 'crypto';
+import { CacheService } from '../cache/cache.service';
+import Keyv from 'keyv';
 
 interface PropertyEntityConnection {
   edges: {
@@ -23,6 +26,8 @@ interface PropertyEntityConnection {
 
 @Injectable()
 export class PropertyService {
+  private cache: Keyv;
+
   constructor(
     @InjectRepository(PropertyEntity)
     private readonly propertyRepository: Repository<PropertyEntity>,
@@ -30,18 +35,36 @@ export class PropertyService {
     private readonly blockedDateRepository: Repository<BlockedDate>,
     @InjectRepository(PriceRule)
     private readonly priceRuleRepository: Repository<PriceRule>,
-    private readonly logger: LoggerService
+    private readonly logger: LoggerService,
+    private readonly cacheService: CacheService,
   ) {
-    // Test log on service initialization
     this.logger.debug('PropertyService initialized', 'PropertyService');
+    this.cache = this.cacheService.getNamespacedCache('property', (60000 * 5));
   }
 
-  // QUERIES
   async findById(id: string): Promise<PropertyEntity | null> {
-    const property = await this.propertyRepository.findOne({
-      where: { id }
-    });
-    return property || null;  // Explicitly return null when not found
+    const cacheKey = this.cacheService.generateCacheKey('single', id);
+    try {
+      const cached = await this.cache.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+
+      const property = await this.propertyRepository.findOne({
+        where: { id }
+      });
+
+      if (property) {
+        await this.cache.set(cacheKey, JSON.stringify(property));
+      }
+
+      return property || null;
+    } catch (error) {
+      this.logger.error('Cache operation failed', 'PropertyService', error);
+      return this.propertyRepository.findOne({
+        where: { id }
+      });
+    }
   }
 
   async findByIds(ids: string[]): Promise<PropertyType[]> {
@@ -55,40 +78,76 @@ export class PropertyService {
     filter?: PropertyFilter;
     pagination?: PaginationInput;
   }): Promise<PropertyEntityConnection> {
-    const { filter, pagination } = args;
+    const cacheKey = this.cacheService.generateCacheKey('list', args);
+    
+    try {
+      const cached = await this.cache.get(cacheKey);
+      if (cached) {
+        this.logger.debug('Cache hit', 'PropertyService', { cacheKey });
+        return JSON.parse(cached);
+      }
 
-    const qb = this.propertyRepository.createQueryBuilder('property');
+      const { filter, pagination } = args;
+      const qb = this.propertyRepository.createQueryBuilder('property');
 
-    // Join necessary relations
-    qb.leftJoinAndSelect('property.location', 'location')
-      .leftJoinAndSelect('property.amenities', 'amenities')
-      .leftJoinAndSelect('property.organization', 'organization');
+      qb.leftJoinAndSelect('property.location', 'location')
+        .leftJoinAndSelect('property.amenities', 'amenities')
+        .leftJoinAndSelect('property.organization', 'organization');
 
-    // Apply filters
-    if (filter) {
-      this.applyPropertyTypeFilter(qb, filter);
-      this.applyPriceFilter(qb, filter);
-      this.applyYearBuiltFilter(qb, filter);
-      this.applyRoomFilter(qb, filter);
-      this.applyStoriesFilter(qb, filter);
-      this.applyAreaFilter(qb, filter);
-      this.applyLocationFilter(qb, filter);
-      this.applyAmenitiesFilter(qb, filter);
-      this.applySearchFilter(qb, filter);
-      this.applySortingRules(qb, filter);
-      this.applyAvailabilityFilters(qb, filter);
+      if (filter) {
+        this.applyPropertyTypeFilter(qb, filter);
+        this.applyPriceFilter(qb, filter);
+        this.applyYearBuiltFilter(qb, filter);
+        this.applyRoomFilter(qb, filter);
+        this.applyStoriesFilter(qb, filter);
+        this.applyAreaFilter(qb, filter);
+        this.applyLocationFilter(qb, filter);
+        this.applyAmenitiesFilter(qb, filter);
+        this.applySearchFilter(qb, filter);
+        this.applySortingRules(qb, filter);
+        this.applyAvailabilityFilters(qb, filter);
+      }
+
+      if (pagination) {
+        this.applyPagination(qb, pagination);
+      }
+
+      const [properties, totalCount] = await qb.getManyAndCount();
+      const connection = this.createPropertyConnection(properties, totalCount, pagination);
+
+      await this.cache.set(cacheKey, JSON.stringify(connection));
+      
+      return connection;
+    } catch (error) {
+      this.logger.error('Cache operation failed', 'PropertyService', error);
+      const { filter, pagination } = args;
+      const qb = this.propertyRepository.createQueryBuilder('property');
+
+      qb.leftJoinAndSelect('property.location', 'location')
+        .leftJoinAndSelect('property.amenities', 'amenities')
+        .leftJoinAndSelect('property.organization', 'organization');
+
+      if (filter) {
+        this.applyPropertyTypeFilter(qb, filter);
+        this.applyPriceFilter(qb, filter);
+        this.applyYearBuiltFilter(qb, filter);
+        this.applyRoomFilter(qb, filter);
+        this.applyStoriesFilter(qb, filter);
+        this.applyAreaFilter(qb, filter);
+        this.applyLocationFilter(qb, filter);
+        this.applyAmenitiesFilter(qb, filter);
+        this.applySearchFilter(qb, filter);
+        this.applySortingRules(qb, filter);
+        this.applyAvailabilityFilters(qb, filter);
+      }
+
+      if (pagination) {
+        this.applyPagination(qb, pagination);
+      }
+
+      const [properties, totalCount] = await qb.getManyAndCount();
+      return this.createPropertyConnection(properties, totalCount, pagination);
     }
-
-    // Apply pagination
-    if (pagination) {
-      this.applyPagination(qb, pagination);
-    }
-
-    // Execute query
-    const [properties, totalCount] = await qb.getManyAndCount();
-
-    // Create connection structure
-    return this.createPropertyConnection(properties, totalCount, pagination);
   }
 
   async findByOrganizationId(
@@ -191,7 +250,6 @@ export class PropertyService {
   }
 
   // MUTATIONS
-
   async create(input: CreatePropertyInput): Promise<PropertyEntity> {
     const areaInSquareMeters = input.areaUnit === AreaUnit.SQUARE_METERS ? input.area : squareFeetToSquareMeters(input.area);
     const lotSizeInSquareMeters = input.lotSizeUnit === AreaUnit.SQUARE_METERS ? input.lotSize : squareFeetToSquareMeters(input.lotSize);
@@ -227,6 +285,9 @@ export class PropertyService {
 
     const savedProperty = await this.propertyRepository.save(property);
     const { location: _, ...propertyWithoutLocation } = savedProperty;
+    
+    await this.invalidatePropertyCache();
+    
     return propertyWithoutLocation;
   }
 
@@ -290,7 +351,9 @@ export class PropertyService {
           }))
         })
       });
-      return this.propertyRepository.save(updatedProperty);
+      const savedProperty = await this.propertyRepository.save(updatedProperty);
+      await this.invalidatePropertyCache(id);
+      return savedProperty;
     } catch (error: any) {
       this.logger.error('Error updating property', 'PropertyService', error);
       throw error;
@@ -299,14 +362,15 @@ export class PropertyService {
 
   async remove(id: string): Promise<boolean> {
     const result = await this.propertyRepository.delete(id);
+    if (result.affected) {
+      await this.invalidatePropertyCache(id);
+    }
     return result.affected ? result.affected > 0 : false;
   }
 
   // UTILITIES
 
   async calculateTotalPrice(propertyId: string, startDate: Date, endDate: Date): Promise<number> {
-    // Simple log at start of method
-
     const property = await this.propertyRepository.findOneOrFail({ where: { id: propertyId } });
     const priceRules = await this.getPriceRulesInRange(propertyId, startDate, endDate);
 
@@ -761,6 +825,19 @@ export class PropertyService {
       if (last) {
         qb.take(last);
       }
+    }
+  }
+
+  private async invalidatePropertyCache(propertyId?: string) {
+    try {
+      if (propertyId) {
+        const propertyKey = this.cacheService.generateCacheKey('single', propertyId);
+        await this.cache.delete(propertyKey);
+      }
+      await this.cache.delete('properties:*');
+      this.logger.debug('Cache invalidated', 'PropertyService', { propertyId });
+    } catch (error) {
+      this.logger.error('Cache invalidation failed', 'PropertyService', error);
     }
   }
 } 

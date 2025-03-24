@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import Keyv from 'keyv';
 import KeyvRedis from '@keyv/redis';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class CacheService {
@@ -21,5 +22,17 @@ export class CacheService {
       namespace,
       ttl: ttl || 60000 // default 60 seconds
     });
+  }
+
+  generateCacheKey(prefix: string, data?: any): string {
+    if (!data) {
+      return prefix;
+    }
+    
+    const hash = createHash('sha256')
+      .update(JSON.stringify(data))
+      .digest('hex');
+    
+    return `${prefix}:${hash}`;
   }
 } 
