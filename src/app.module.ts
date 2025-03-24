@@ -17,12 +17,7 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
 import { SearchModule } from './search/search.module';
 import { KafkaModule } from './kafka/kafka.module';
 import { NotificationModule } from './notification/notification.module';
-import { ApolloServerPluginCacheControl } from 'apollo-server-core';
-import responseCachePlugin from 'apollo-server-plugin-response-cache';
-import Keyv from 'keyv';
-import KeyvRedis from "@keyv/redis";
-import { KeyvAdapter } from '@apollo/utils.keyvadapter';
-
+import { CacheModule } from './cache/cache.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -30,15 +25,6 @@ import { KeyvAdapter } from '@apollo/utils.keyvadapter';
       driver: ApolloDriver,
       typePaths: ['./src/schema.graphql'],
       installSubscriptionHandlers: true,
-      plugins: [
-        ApolloServerPluginCacheControl({ defaultMaxAge: 5 }) as any,
-        responseCachePlugin() as any,
-      ],
-      cache: new KeyvAdapter(new Keyv({
-        store: new KeyvRedis(`redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`),
-        ttl: 60000, // 60 seconds
-        namespace: 'rental-app'
-      })),
     }),
     PropertyModule,
     AmenityModule,
@@ -55,6 +41,7 @@ import { KeyvAdapter } from '@apollo/utils.keyvadapter';
     SearchModule,
     KafkaModule,
     NotificationModule,
+    CacheModule,
   ],
 })
 export class AppModule {}

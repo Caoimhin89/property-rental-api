@@ -108,15 +108,9 @@ export class PropertyService {
       qb.andWhere('property.created_at > (SELECT created_at FROM properties WHERE id = :before)', { before });
     }
 
-    this.logger.debug('Generated SQL:', 'PropertyService', {
-      sql: qb.getSql(),
-      parameters: qb.getParameters()
-    });
-
     const [properties, totalCount] = await qb.getManyAndCount();
     // Always return a valid connection, even if empty
     const connection = this.createPropertyConnection(properties || [], totalCount, { first, last });
-    this.logger.debug('PropertyConnection from findByOrganizationId', 'PropertyService', { connection });
     return connection;
   }
 
@@ -233,7 +227,6 @@ export class PropertyService {
 
     const savedProperty = await this.propertyRepository.save(property);
     const { location: _, ...propertyWithoutLocation } = savedProperty;
-    this.logger.debug('Property created', 'PropertyService', { propertyType: savedProperty.propertyType });
     return propertyWithoutLocation;
   }
 
@@ -313,16 +306,9 @@ export class PropertyService {
 
   async calculateTotalPrice(propertyId: string, startDate: Date, endDate: Date): Promise<number> {
     // Simple log at start of method
-    this.logger.debug('Starting price calculation', 'PropertyService', { propertyId, startDate, endDate });
 
     const property = await this.propertyRepository.findOneOrFail({ where: { id: propertyId } });
     const priceRules = await this.getPriceRulesInRange(propertyId, startDate, endDate);
-
-    // Log retrieved data
-    this.logger.debug('Retrieved property and price rules', 'PropertyService', {
-      basePrice: property.basePrice,
-      priceRulesCount: priceRules.length
-    });
 
     let totalPrice = 0;
     let currentDate = new Date(startDate);
@@ -336,22 +322,8 @@ export class PropertyService {
       );
 
       totalPrice += applicableRule ? Number(applicableRule.price) : Number(property.basePrice);
-      this.logger.debug(
-        'Calculating price for dates',
-        'PropertyService',
-        {
-          currentDate,
-          applicableRule: applicableRule ? applicableRule.price : 'no applicable rule',
-          priceRules,
-          totalPrice,
-          basePrice: property.basePrice
-        }
-      );
       currentDate.setDate(currentDate.getDate() + 1);
     }
-
-    // Log final result
-    this.logger.debug('Price calculation completed', 'PropertyService', { totalPrice });
 
     return totalPrice;
   }
@@ -394,7 +366,7 @@ export class PropertyService {
       },
       totalCount,
     };
-    this.logger.debug('PropertyConnection', 'PropertyService', { connection });
+    // this.logger.debug('PropertyConnection', 'PropertyService', { connection });
 
     return connection;
   }
