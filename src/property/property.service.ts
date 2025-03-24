@@ -154,6 +154,17 @@ export class PropertyService {
     organizationId: string,
     pagination: PaginationInput
   ) {
+    const cacheKey = this.cacheService.generateCacheKey('list', { organizationId, pagination });
+    try {
+      const cached = await this.cache.get(cacheKey);
+      if (cached) {
+        this.logger.debug('Cache hit', 'PropertyService', { cacheKey });
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      this.logger.error('Cache operation failed', 'PropertyService', error);
+    }
+    
     const { after, before, first, last } = pagination;
     const qb = this.propertyRepository.createQueryBuilder('property')
       .where('property.organization_id = :organizationId', { organizationId })
@@ -170,6 +181,7 @@ export class PropertyService {
     const [properties, totalCount] = await qb.getManyAndCount();
     // Always return a valid connection, even if empty
     const connection = this.createPropertyConnection(properties || [], totalCount, { first, last });
+    await this.cache.set(cacheKey, JSON.stringify(connection));
     return connection;
   }
 
