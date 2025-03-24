@@ -11,7 +11,6 @@ import { PriceRule } from './entities/price-rule.entity';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { LoggerService } from '../common/services/logger.service';
 import { PropertyNotFoundException, PropertyUnauthorizedException } from './property.errors';
-import { createHash } from 'crypto';
 import { CacheService } from '../cache/cache.service';
 import Keyv from 'keyv';
 
