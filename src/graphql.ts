@@ -54,6 +54,23 @@ export enum MaintenanceRequestUrgency {
     HIGH = "HIGH"
 }
 
+export enum BedType {
+    BED = "BED",
+    SOFA_BED = "SOFA_BED",
+    COT = "COT",
+    OTHER = "OTHER"
+}
+
+export enum BedSize {
+    SINGLE = "SINGLE",
+    DOUBLE = "DOUBLE",
+    QUEEN = "QUEEN",
+    KING = "KING",
+    CALIFORNIA_KING = "CALIFORNIA_KING",
+    CALIFORNIA_QUEEN = "CALIFORNIA_QUEEN",
+    OTHER = "OTHER"
+}
+
 export enum NotificationType {
     ADMIN_BOOKING_CONFIRMATION_REQUESTED = "ADMIN_BOOKING_CONFIRMATION_REQUESTED",
     ADMIN_PROPERTY_APPROVAL_REQUIRED = "ADMIN_PROPERTY_APPROVAL_REQUIRED",
@@ -142,6 +159,12 @@ export class CreateUserInput {
     name: string;
 }
 
+export class CreateBedInput {
+    bedType: BedType;
+    bedSize: BedSize;
+    room: string;
+}
+
 export class CreatePropertyInput {
     name: string;
     description?: Nullable<string>;
@@ -161,6 +184,7 @@ export class CreatePropertyInput {
     location: CreateLocationInput;
     amenities?: Nullable<CreateAmenityInput[]>;
     images?: Nullable<CreateImageInput[]>;
+    beds?: Nullable<CreateBedInput[]>;
 }
 
 export class UpdatePropertyInput {
@@ -558,6 +582,17 @@ export abstract class IQuery {
     abstract notifications(userId: string, filter?: Nullable<NotificationFilter>, pagination?: Nullable<PaginationInput>): NotificationConnection | Promise<NotificationConnection>;
 }
 
+export class Bed {
+    __typename?: 'Bed';
+    id: string;
+    propertyId: string;
+    bedType: BedType;
+    bedSize: BedSize;
+    room: string;
+    createdAt: DateTime;
+    updatedAt: DateTime;
+}
+
 export class Property {
     __typename?: 'Property';
     id: string;
@@ -573,6 +608,7 @@ export class Property {
     yearBuilt?: Nullable<number>;
     areaInSquareMeters: number;
     lotSizeInSquareMeters: number;
+    beds: Bed[];
     organization: Organization;
     location: Location;
     amenities: Amenity[];
