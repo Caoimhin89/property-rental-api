@@ -145,6 +145,11 @@ export class PropertyResolver {
   }
 
   @ResolveField()
+  async beds(@Parent() property: Property) {
+    return this.propertyService.getBeds(property.id);
+  }
+
+  @ResolveField()
   async organization(@Parent() property: PropertyEntity) {
     return this.organizationService.findById(property.organizationId);
   }
