@@ -20,6 +20,7 @@ import { PriceRule } from './price-rule.entity';
 import { PropertyType } from '../../graphql';
 import { Organization } from '../../organization/entities/organization.entity';
 import { MaintenanceRequest } from 'maintenance/entities/maintenance-request.entity';
+import { Bed as BedEntity } from './bed.entity';
 
 @Entity('properties')
 export class Property {
@@ -71,11 +72,25 @@ export class Property {
   propertyType: PropertyType;
 
   // for advanced search
-  @Column({ type: 'tsvector', select: false, nullable: true })
+  @Column({
+    type: 'tsvector',
+    select: false,
+    nullable: true,
+    name: 'search_vector',
+    insert: false,
+    update: false,
+  })
   searchVector?: string;
 
   // Virtual field for search score
-  @Column({ type: 'float', select: false, nullable: true })
+  @Column({
+    type: 'float',
+    select: false,
+    nullable: true,
+    name: 'search_similarity',
+    insert: false,
+    update: false,
+  })
   searchSimilarity?: number;
 
   @Column('decimal', { precision: 10, scale: 2, name: 'base_price', transformer: {
@@ -117,6 +132,9 @@ export class Property {
 
   @OneToMany(() => PriceRule, priceRule => priceRule.property)
   priceRules?: PriceRule[];
+
+  @OneToMany(() => BedEntity, bed => bed.property, { cascade: true })
+  beds?: BedEntity[];
 
   @CreateDateColumn({ type: 'timestamp with time zone', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
