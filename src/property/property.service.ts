@@ -14,7 +14,7 @@ import { PropertyNotFoundException, PropertyUnauthorizedException } from './prop
 import { CacheService } from '../cache/cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CacheSetEvent, CacheInvalidateEvent } from '../cache/cache.events';
-
+import { Bed } from './entities/bed.entity';
 interface PropertyEntityConnection {
   edges: {
     cursor: string;
@@ -33,6 +33,8 @@ export class PropertyService {
     private readonly blockedDateRepository: Repository<BlockedDate>,
     @InjectRepository(PriceRule)
     private readonly priceRuleRepository: Repository<PriceRule>,
+    @InjectRepository(Bed)
+    private readonly bedRepository: Repository<Bed>,
     private readonly logger: LoggerService,
     private readonly cacheService: CacheService,
     private readonly eventEmitter: EventEmitter2,
@@ -238,6 +240,14 @@ export class PropertyService {
     });
   }
 
+  async getBeds(propertyId: string): Promise<Bed[]> {
+    this.logger.debug('Getting beds for property', 'PropertyService', { propertyId });
+    return this.bedRepository.find({
+      where: { propertyId },
+      order: { createdAt: 'ASC' }
+    });
+  }
+
   async findByOrganizationIds(organizationIds: readonly string[], pagination: PaginationInput) {
     const { after, before, first, last } = pagination;
     const qb = this.propertyRepository.createQueryBuilder('property')
@@ -287,6 +297,11 @@ export class PropertyService {
       yearBuilt: input.yearBuilt,
       areaInSquareMeters: areaInSquareMeters,
       lotSizeInSquareMeters: lotSizeInSquareMeters,
+      ...(input.beds && { beds: input.beds.map(bedInput => ({
+        bedType: bedInput.bedType,
+        bedSize: bedInput.bedSize,
+        room: bedInput.room
+      })) }),
       ...(input.location && {
         location: {
           address: input.location.address,
