@@ -22,6 +22,8 @@ CREATE TYPE notification_type AS ENUM (
   'ORGANIZATION_INVITATION', 'ORGANIZATION_MEMBER_ADDED', 'ORGANIZATION_MEMBER_REMOVED',
   'OTHER'
 );
+CREATE TYPE bed_size AS ENUM ('SINGLE', 'DOUBLE', 'QUEEN', 'KING', 'CALIFORNIA_KING', 'CALIFORNIA_QUEEN', 'OTHER');
+CREATE TYPE bed_type AS ENUM ('BED', 'SOFA_BED', 'COT', 'OTHER');
 
 -- Users Table
 CREATE TABLE users (
@@ -74,6 +76,18 @@ CREATE INDEX idx_properties_search ON properties USING gin(search_vector);
 -- trigram indexes for fuzzy matching
 CREATE INDEX idx_properties_name_trgm ON properties USING gin (name gin_trgm_ops);
 CREATE INDEX idx_properties_description_trgm ON properties USING gin (description gin_trgm_ops);
+
+-- Beds Table
+CREATE TABLE beds (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+    bed_type bed_type NOT NULL,
+    bed_size bed_size NOT NULL,
+    room VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 
 -- Nearby Places Table
 CREATE TABLE nearby_places (

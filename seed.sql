@@ -30,6 +30,12 @@ INSERT INTO properties (id, name, description, property_type, base_price, max_oc
 ('a6d8d8fc-53a7-4ddc-9974-09359b20e187'::uuid, 'Downtown Apartment', 'Modern apartment in city center', 'APARTMENT', 150.00, 2, 'd6d8d8fc-53a7-4ddc-9974-09359b20e187'::uuid, 1, 1, 1, 1, 2015, 80, 500, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('bcd32b09-b38b-4002-b77d-3726b6be4961'::uuid, 'Luxury Villa', 'Spectacular villa with ocean view', 'VILLA', 300.00, 6, 'cdd32b09-b38b-4002-b77d-3726b6be4961'::uuid, 4, 3, 2, 2, 2018, 250, 1500, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
+-- Beds
+INSERT INTO beds (id, property_id, bed_type, bed_size, room, created_at, updated_at) VALUES
+('f36da9af-4420-4671-8775-b9adf38cd51b'::uuid, 'b5d5c35f-f54f-466f-9456-cb2193d32d23'::uuid, 'BED', 'SINGLE', 'Bedroom 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('3f71085e-38a7-41dd-a18c-f4c1522f9752'::uuid, 'a6d8d8fc-53a7-4ddc-9974-09359b20e187'::uuid, 'BED', 'DOUBLE', 'Bedroom 2', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('103d2c62-06a5-4b9b-8c8a-2a81cc0826f4'::uuid, 'bcd32b09-b38b-4002-b77d-3726b6be4961'::uuid, 'BED', 'QUEEN', 'Bedroom 3', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 -- Nearby Places
 INSERT INTO nearby_places (id, name, type, distance, created_at, updated_at) VALUES
 ('811e76d5-2a9a-4671-8fd3-a0ad47a011ed'::uuid, 'Beach Club', 'ENTERTAINMENT', 0.5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
