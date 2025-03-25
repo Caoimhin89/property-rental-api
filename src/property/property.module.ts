@@ -13,13 +13,14 @@ import { LocationModule } from '../location/location.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { AmenityModule } from '../amenity/amenity.module';
 import { CacheModule } from '../cache/cache.module';
-
+import { Bed } from './entities/bed.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Property,
       BlockedDate,
       PriceRule,
+      Bed,
       Organization
     ]),
     forwardRef(() => OrganizationModule),
