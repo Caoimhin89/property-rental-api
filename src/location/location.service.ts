@@ -6,7 +6,8 @@ import { CacheService } from '../cache/cache.service';
 import { LoggerService } from '../common/services/logger.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CacheSetEvent, CacheInvalidateEvent } from '../cache/cache.events';
-
+import { GeocodingService } from './services/geocoding.service';
+import { CreateLocationInput, UpdateLocationInput } from '../graphql';
 @Injectable()
 export class LocationService {
   private readonly NAMESPACE = 'location';
@@ -18,6 +19,7 @@ export class LocationService {
     private readonly cacheService: CacheService,
     private readonly logger: LoggerService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly geocodingService: GeocodingService,
   ) {}
 
   async findByPropertyId(propertyId: string): Promise<Location | null> {
@@ -94,5 +96,37 @@ export class LocationService {
       this.NAMESPACE,
       'list:*'
     ));
+  }
+
+  // Method to merge location data with coordinates
+  async enrichLocationWithCoordinates(
+    location: CreateLocationInput | UpdateLocationInput | null
+  ): Promise<CreateLocationInput | UpdateLocationInput | null> {
+    if (!location || (location.latitude && location.longitude)) {
+      return location;
+    }
+
+    const coordinates = await this.geocodingService.geocodeAddress({
+      address: location.address,
+      city: location.city,
+      state: location.state,
+      country: location.country,
+      postalCode: location.postalCode,
+    });
+
+    if (coordinates) {
+      return {
+        ...location,
+        ...coordinates,
+      };
+    }
+
+    this.logger.warn(
+      'Could not geocode address, proceeding without coordinates',
+      'LocationService',
+      { location }
+    );
+    
+    return location;
   }
 } 
