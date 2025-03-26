@@ -2,12 +2,13 @@ import { Resolver, ResolveField, Parent, Args, Query, createUnionType } from '@n
 import { Location as LocationEntity } from './entities/location.entity';
 import { NearbyPlaceService } from '../nearby-place/nearby-place.service';
 import { Injectable } from '@nestjs/common';
-import { 
-  CreateLocationInput, 
+import {
   GeocodeInput, 
   GeocodeResponse,
   GeocodeSuccessResponse,
-  GeocodeErrorResponse 
+  GeocodeErrorResponse, 
+  LocationSuggestion,
+  LocationSuggestionsInput
 } from '../graphql';
 import { LocationService } from './location.service';
 
@@ -40,6 +41,11 @@ export class LocationResolver {
       longitude: location.longitude || 0
     };
     return successResponse;
+  }
+
+  @Query(() => [LocationSuggestion])
+  async locationSuggestions(@Args('input', { type: () => LocationSuggestionsInput }) input: LocationSuggestionsInput): Promise<LocationSuggestion[]> {
+    return this.locationService.parseLocationsFromSuggestions(await this.locationService.getLocationSuggestions(input));
   }
 
   @ResolveField()

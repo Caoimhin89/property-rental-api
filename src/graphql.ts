@@ -314,6 +314,10 @@ export class UpdateAmenityInput {
     iconUrl?: Nullable<string>;
 }
 
+export class LocationSuggestionsInput {
+    query: string;
+}
+
 export class CreateMaintenanceRequestInput {
     propertyId: string;
     urgency: MaintenanceRequestUrgency;
@@ -481,6 +485,19 @@ export class GeocodeErrorResponse {
     error: string;
 }
 
+export class LocationSuggestion {
+    __typename?: 'LocationSuggestion';
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode?: Nullable<string>;
+    latitude?: Nullable<number>;
+    longitude?: Nullable<number>;
+}
+
 export abstract class IMutation {
     __typename?: 'IMutation';
 
@@ -601,6 +618,8 @@ export abstract class IQuery {
     abstract notifications(userId: string, filter?: Nullable<NotificationFilter>, pagination?: Nullable<PaginationInput>): NotificationConnection | Promise<NotificationConnection>;
 
     abstract geocode(input: GeocodeInput): GeocodeResponse | Promise<GeocodeResponse>;
+
+    abstract locationSuggestions(input: LocationSuggestionsInput): Nullable<LocationSuggestion>[] | Promise<Nullable<LocationSuggestion>[]>;
 }
 
 export class Bed {

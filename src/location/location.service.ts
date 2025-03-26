@@ -6,8 +6,8 @@ import { CacheService } from '../cache/cache.service';
 import { LoggerService } from '../common/services/logger.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CacheSetEvent, CacheInvalidateEvent } from '../cache/cache.events';
-import { GeocodingService } from './services/geocoding.service';
-import { CreateLocationInput, UpdateLocationInput } from '../graphql';
+import { GeocodingService, LocationSuggestion } from './services/geocoding.service';
+import { CreateLocationInput, LocationSuggestionsInput, UpdateLocationInput, LocationSuggestion as LocationSuggestionType } from '../graphql';
 @Injectable()
 export class LocationService {
   private readonly NAMESPACE = 'location';
@@ -128,5 +128,22 @@ export class LocationService {
     );
     
     return location;
+  }
+
+  async getLocationSuggestions(input: LocationSuggestionsInput): Promise<LocationSuggestion[]> {
+    return await this.geocodingService.getLocationSuggestions(input);
+  }
+
+  parseLocationsFromSuggestions(suggestions: LocationSuggestion[]): LocationSuggestionType[] {
+    return suggestions.map((suggestion) => ({
+      id: suggestion.mapbox_id,
+      name: suggestion.name,
+      address: suggestion.address || '',
+      city: suggestion.context.place?.name || '',
+      state: suggestion.context.region?.name || '',
+      country: suggestion.context.country?.name || '',
+      county: suggestion.context.district?.name || '',
+      postalCode: suggestion.context.postcode?.name || '',
+    }));
   }
 } 
