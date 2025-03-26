@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { LocationService } from '../location/location.service';
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Property as PropertyEntity } from './entities/property.entity';
 import { User as UserEntity } from 'user/entities/user.entity';
@@ -38,6 +39,7 @@ export class PropertyService {
     private readonly logger: LoggerService,
     private readonly cacheService: CacheService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly locationService: LocationService,
   ) {
     this.logger.debug('PropertyService initialized', 'PropertyService');
   }
@@ -282,6 +284,13 @@ export class PropertyService {
   async create(input: CreatePropertyInput): Promise<PropertyEntity> {
     const areaInSquareMeters = input.areaUnit === AreaUnit.SQUARE_METERS ? input.area : squareFeetToSquareMeters(input.area);
     const lotSizeInSquareMeters = input.lotSizeUnit === AreaUnit.SQUARE_METERS ? input.lotSize : squareFeetToSquareMeters(input.lotSize);
+
+    // Enrich location with coordinates
+    const geoEnrichedLocation = (input.location?.address &&
+      (!input.location?.latitude || !input.location?.longitude)) ?
+      await this.locationService.enrichLocationWithCoordinates(input.location) : input.location;
+
+    // Create property
     const property = this.propertyRepository.create({
       name: input.name,
       organizationId: input.organizationId,
@@ -302,17 +311,17 @@ export class PropertyService {
         bedSize: bedInput.bedSize,
         room: bedInput.room
       })) }),
-      ...(input.location && {
+      ...(geoEnrichedLocation && {
         location: {
-          address: input.location.address,
-          postalCode: input.location.postalCode,
-          postalCodeSuffix: input.location.postalCodeSuffix,
-          city: input.location.city,
-          county: input.location.county,
-          state: input.location.state,
-          country: input.location.country,
-          latitude: input.location.latitude,
-          longitude: input.location.longitude
+          address: geoEnrichedLocation.address,
+          postalCode: geoEnrichedLocation.postalCode,
+          postalCodeSuffix: geoEnrichedLocation.postalCodeSuffix,
+          city: geoEnrichedLocation.city,
+          county: geoEnrichedLocation.county,
+          state: geoEnrichedLocation.state,
+          country: geoEnrichedLocation.country,
+          latitude: geoEnrichedLocation.latitude,
+          longitude: geoEnrichedLocation.longitude
         }
       }),
     } as PropertyEntity);
@@ -348,6 +357,11 @@ export class PropertyService {
       throw new PropertyUnauthorizedException();
     }
 
+    // Enrich location with coordinates
+    const geoEnrichedLocation = (input.location?.address &&
+      (!input.location?.latitude || !input.location?.longitude)) ?
+      await this.locationService.enrichLocationWithCoordinates(input.location) : input.location;
+
     // Update property
     try {
       const updatedProperty = this.propertyRepository.merge(property, {
@@ -363,17 +377,17 @@ export class PropertyService {
         ...(input.yearBuilt && { yearBuilt: input.yearBuilt }),
         ...(input.area && { areaInSquareMeters: input.area }),
         ...(input.lotSize && { lotSizeInSquareMeters: input.lotSize }),
-        ...(input.location && {
+        ...(geoEnrichedLocation && {
           location: {
-            ...(input.location.address && { address: input.location.address }),
-            ...(input.location.postalCode && { postalCode: input.location.postalCode }),
-            ...(input.location.postalCodeSuffix && { postalCodeSuffix: input.location.postalCodeSuffix }),
-            ...(input.location.city && { city: input.location.city }),
-            ...(input.location.county && { county: input.location.county }),
-            ...(input.location.state && { state: input.location.state }),
-            ...(input.location.country && { country: input.location.country }),
-            ...(input.location.latitude && { latitude: input.location.latitude }),
-            ...(input.location.longitude && { longitude: input.location.longitude }),
+            ...(geoEnrichedLocation.address && { address: geoEnrichedLocation.address }),
+            ...(geoEnrichedLocation.postalCode && { postalCode: geoEnrichedLocation.postalCode }),
+            ...(geoEnrichedLocation.postalCodeSuffix && { postalCodeSuffix: geoEnrichedLocation.postalCodeSuffix }),
+            ...(geoEnrichedLocation.city && { city: geoEnrichedLocation.city }),
+            ...(geoEnrichedLocation.county && { county: geoEnrichedLocation.county }),
+            ...(geoEnrichedLocation.state && { state: geoEnrichedLocation.state }),
+            ...(geoEnrichedLocation.country && { country: geoEnrichedLocation.country }),
+            ...(geoEnrichedLocation.latitude && { latitude: geoEnrichedLocation.latitude }),
+            ...(geoEnrichedLocation.longitude && { longitude: geoEnrichedLocation.longitude }),
           }
         }),
         ...(input.blockedDates && { blockedDates: input.blockedDates.map(blockedDate => ({
