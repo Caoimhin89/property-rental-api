@@ -243,6 +243,14 @@ export class UpdateImageInput {
     caption?: Nullable<string>;
 }
 
+export class GeocodeInput {
+    address: string;
+    postalCode?: Nullable<string>;
+    city: string;
+    state: string;
+    country?: Nullable<string>;
+}
+
 export class CreateLocationInput {
     address: string;
     postalCode: string;
@@ -462,6 +470,17 @@ export class AuthResponse {
     user: User;
 }
 
+export class GeocodeSuccessResponse {
+    __typename?: 'GeocodeSuccessResponse';
+    latitude: number;
+    longitude: number;
+}
+
+export class GeocodeErrorResponse {
+    __typename?: 'GeocodeErrorResponse';
+    error: string;
+}
+
 export abstract class IMutation {
     __typename?: 'IMutation';
 
@@ -580,6 +599,8 @@ export abstract class IQuery {
     abstract notification(id: string): Nullable<Notification> | Promise<Nullable<Notification>>;
 
     abstract notifications(userId: string, filter?: Nullable<NotificationFilter>, pagination?: Nullable<PaginationInput>): NotificationConnection | Promise<NotificationConnection>;
+
+    abstract geocode(input: GeocodeInput): GeocodeResponse | Promise<GeocodeResponse>;
 }
 
 export class Bed {
@@ -1017,4 +1038,5 @@ export class SearchResultConnection {
 export type DateTime = any;
 export type Money = any;
 export type PropertyResult = Property | Error;
+export type GeocodeResponse = GeocodeSuccessResponse | GeocodeErrorResponse;
 type Nullable<T> = T | null;

@@ -130,6 +130,25 @@ input UpdateImageInput {
   caption: String
 }
 
+input GeocodeInput {
+  address: String!
+  postalCode: String
+  city: String!
+  state: String!
+  country: String
+}
+
+type GeocodeSuccessResponse {
+  latitude: Float!
+  longitude: Float!
+}
+
+type GeocodeErrorResponse {
+  error: String!
+}
+
+union GeocodeResponse = GeocodeSuccessResponse | GeocodeErrorResponse
+
 input CreateLocationInput {
   address: String!
   postalCode: String!
@@ -301,6 +320,7 @@ type Query {
     userId: ID!,
     filter: NotificationFilter,
     pagination: PaginationInput): NotificationConnection!
+  geocode(input: GeocodeInput!): GeocodeResponse!
 }
 
 # Scalar Types
