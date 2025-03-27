@@ -5,13 +5,15 @@ import { User as UserEntity } from './entities/user.entity';
 import { BookingService } from '../booking/booking.service';
 import { DataLoaderService } from '../data-loader/data-loader.service';
 import { OrganizationService } from '../organization/organization.service';
+import { PropertyService } from '../property/property.service';
 @Resolver(() => User)
 export class UserResolver {
   constructor(
     private readonly userService: UserService,
     private readonly bookingService: BookingService,
     private readonly dataLoaderService: DataLoaderService,
-    private readonly organizationService: OrganizationService
+    private readonly organizationService: OrganizationService,
+    private readonly propertyService: PropertyService
   ) {}
 
   @Mutation(() => User)
@@ -67,5 +69,13 @@ export class UserResolver {
   @ResolveField()
   async organization(@Parent() user: UserEntity) {
     return this.organizationService.findByUserId(user.id);
+  }
+
+  @ResolveField()
+  async favoriteProperties(
+    @Parent() user: UserEntity,
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput
+  ) {
+    return this.propertyService.getFavoritesByUserId(user.id, pagination);
   }
 } 

@@ -7,12 +7,14 @@ import { BookingModule } from '../booking/booking.module';
 import { forwardRef } from '@nestjs/common';
 import { DataLoaderModule } from '../data-loader/data-loader.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { PropertyModule } from '../property/property.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     BookingModule,
     forwardRef(() => DataLoaderModule),
-    forwardRef(() => OrganizationModule)
+    forwardRef(() => OrganizationModule),
+    forwardRef(() => PropertyModule)
   ],
   providers: [UserService, UserResolver],
   exports: [UserService]
