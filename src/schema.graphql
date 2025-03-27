@@ -244,6 +244,8 @@ type Mutation {
   removeProperty(id: ID!): Boolean!
   blockDates(propertyId: ID!, input: CreateBlockedDateInput!): BlockedDate!
   setPriceRule(propertyId: ID!, input: CreatePriceRuleInput!): PriceRule!
+  addToFavorites(propertyId: ID!): Property!
+  removeFromFavorites(propertyId: ID!): Property!
 
   ## Location Mutations
   createLocation(input: CreateLocationInput!): Location!
@@ -338,6 +340,10 @@ type Query {
     pagination: PaginationInput): NotificationConnection!
   geocode(input: GeocodeInput!): GeocodeResponse!
   locationSuggestions(input: LocationSuggestionsInput!): [LocationSuggestion]!
+  favorites(
+    userId: ID!,
+    pagination: PaginationInput
+  ): FavoritesConnection!
 }
 
 # Scalar Types
@@ -635,6 +641,17 @@ type NearbyPlaceEdge {
   node: NearbyPlace!
 }
 
+type FavoritesConnection {
+  edges: [FavoritesEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type FavoritesEdge {
+  cursor: String!
+  node: Property!
+}
+
 type Review {
   id: ID!
   rating: Float!
@@ -732,6 +749,7 @@ type User {
     pagination: PaginationInput
   ): MaintenanceRequestConnection!
   organization: Organization
+  favoriteProperties(pagination: PaginationInput): FavoritesConnection!
   notifications(
     filter: NotificationFilter,
     pagination: PaginationInput): NotificationConnection!

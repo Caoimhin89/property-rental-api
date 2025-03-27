@@ -521,6 +521,10 @@ export abstract class IMutation {
 
     abstract setPriceRule(propertyId: string, input: CreatePriceRuleInput): PriceRule | Promise<PriceRule>;
 
+    abstract addToFavorites(propertyId: string): Property | Promise<Property>;
+
+    abstract removeFromFavorites(propertyId: string): Property | Promise<Property>;
+
     abstract createLocation(input: CreateLocationInput): Location | Promise<Location>;
 
     abstract removeLocation(id: string): boolean | Promise<boolean>;
@@ -620,6 +624,8 @@ export abstract class IQuery {
     abstract geocode(input: GeocodeInput): GeocodeResponse | Promise<GeocodeResponse>;
 
     abstract locationSuggestions(input: LocationSuggestionsInput): Nullable<LocationSuggestion>[] | Promise<Nullable<LocationSuggestion>[]>;
+
+    abstract favorites(userId: string, pagination?: Nullable<PaginationInput>): FavoritesConnection | Promise<FavoritesConnection>;
 }
 
 export class Bed {
@@ -848,6 +854,19 @@ export class NearbyPlaceEdge {
     node: NearbyPlace;
 }
 
+export class FavoritesConnection {
+    __typename?: 'FavoritesConnection';
+    edges: FavoritesEdge[];
+    pageInfo: PageInfo;
+    totalCount: number;
+}
+
+export class FavoritesEdge {
+    __typename?: 'FavoritesEdge';
+    cursor: string;
+    node: Property;
+}
+
 export class Review {
     __typename?: 'Review';
     id: string;
@@ -907,6 +926,7 @@ export class User {
     bookings?: BookingConnection;
     maintenanceRequests?: MaintenanceRequestConnection;
     organization?: Nullable<Organization>;
+    favoriteProperties?: FavoritesConnection;
     notifications?: NotificationConnection;
     createdAt: DateTime;
     updatedAt: DateTime;

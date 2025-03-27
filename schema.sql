@@ -88,6 +88,15 @@ CREATE TABLE beds (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Favorite Properties
+CREATE TABLE favorite_properties (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, property_id)
+);
+
 
 -- Nearby Places Table
 CREATE TABLE nearby_places (
