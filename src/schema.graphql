@@ -308,6 +308,10 @@ type Query {
   bookings(
     pagination: PaginationInput
   ): BookingConnection!
+  bookingsByUser(
+    userId: ID!,
+    pagination: PaginationInput
+  ): BookingConnection!
   organization(id: ID!): Organization!
   organizations(
     filter: OrganizationFilter,

@@ -61,13 +61,16 @@ export class BookingService {
   }
 
   async findAllBookings(
-    after?: string,
-    before?: string,
-    first?: number,
-    last?: number
+    userId?: string,
+    pagination?: PaginationInput
   ): Promise<BookingConnection> {
+    const { after, before, first, last } = pagination || {};
     const qb = this.bookingRepository.createQueryBuilder('booking')
       .orderBy('booking.created_at', 'DESC');
+
+    if (userId) {
+      qb.andWhere('booking.userId = :userId', { userId });
+    }
 
     if (after) {
       qb.andWhere('booking.created_at < (SELECT created_at FROM bookings WHERE id = :after)', { after });

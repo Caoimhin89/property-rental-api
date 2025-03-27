@@ -1,6 +1,7 @@
 import { Args, Mutation, Query, Resolver, ResolveField, Parent } from '@nestjs/graphql';
 import { BookingService } from './booking.service';
 import {
+  PaginationInput,
   BookingConnection,
   CreateBookingInput,
   BookingResponse,
@@ -36,12 +37,17 @@ export class BookingResolver {
 
   @Query(() => BookingConnection, { nullable: true })
   async bookings(
-    @Args('after') after: string,
-    @Args('before') before: string,
-    @Args('first') first: number,
-    @Args('last') last: number,
+    @Args('pagination') pagination: PaginationInput,
   ): Promise<BookingConnection> {
-    return this.bookingService.findAllBookings(after, before, first, last);
+    return this.bookingService.findAllBookings(undefined, pagination);
+  }
+
+  @Query(() => BookingConnection, { nullable: true })
+  async bookingsByUser(
+    @Args('userId') userId: string,
+    @Args('pagination') pagination: PaginationInput,
+  ): Promise<BookingConnection> {
+    return this.bookingService.findAllBookings(userId, pagination);
   }
 
   @UseGuards(JwtAuthGuard)

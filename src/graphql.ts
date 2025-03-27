@@ -593,6 +593,8 @@ export abstract class IQuery {
 
     abstract bookings(pagination?: Nullable<PaginationInput>): BookingConnection | Promise<BookingConnection>;
 
+    abstract bookingsByUser(userId: string, pagination?: Nullable<PaginationInput>): BookingConnection | Promise<BookingConnection>;
+
     abstract organization(id: string): Organization | Promise<Organization>;
 
     abstract organizations(filter?: Nullable<OrganizationFilter>, pagination?: Nullable<PaginationInput>): OrganizationConnection | Promise<OrganizationConnection>;

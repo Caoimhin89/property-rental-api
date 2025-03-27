@@ -5,7 +5,7 @@ import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Property as PropertyEntity } from './entities/property.entity';
 import { User as UserEntity } from 'user/entities/user.entity';
 import { Property as PropertyType, PropertyFilter, PaginationInput, YearBuiltOperator, PropertySortField, SortOrder, PageInfo, AreaUnit, UpdatePropertyInput } from '../graphql';
-import { acresToSquareMeters, milesToKilometers, squareFeetToSquareMeters, toCursor } from '../common/utils';
+import { acresToSquareMeters, milesToKilometers, squareFeetToSquareMeters, toCursor, fromCursor } from '../common/utils';
 import { CreatePropertyInput } from '../graphql';
 import { BlockedDate } from './entities/blocked-date.entity';
 import { PriceRule } from './entities/price-rule.entity';
@@ -83,59 +83,47 @@ export class PropertyService {
     userId: string,
     pagination?: PaginationInput
   ): Promise<Connection<PropertyEntity>> {
-    // check cache first
-    const cacheKey = this.cacheService.generateCacheKey('favorites', { userId, pagination });
-    const cached = await this.cacheService.get<Connection<PropertyEntity>>('property', cacheKey);
-    if (cached) {
-      return cached;
-    }
-
+    const { first, last, after, before } = pagination || {};
+    
     const query = this.propertyRepository
       .createQueryBuilder('property')
-      .innerJoin(
-        'favorite_properties',
-        'fp',
-        'fp.property_id = property.id'
-      )
-      .where('fp.user_id = :userId', { userId });
+      .innerJoinAndSelect(
+        'property.favoritedBy',
+        'user',
+        'user.id = :userId',
+        { userId }
+      );
 
-    if (pagination?.after) {
+    if (after) {
+      const afterId = fromCursor(after);
       query.andWhere(
-        'fp.created_at < (SELECT created_at FROM favorite_properties WHERE property_id = :after)',
-        { after: pagination.after }
+        'property.createdAt < (SELECT p2.created_at FROM properties p2 WHERE p2.id = :afterId)',
+        { afterId }
       );
     }
 
-    if (pagination?.before) {
+    if (before) {
+      const beforeId = fromCursor(before);
       query.andWhere(
-        'fp.created_at > (SELECT created_at FROM favorite_properties WHERE property_id = :before)',
-        { before: pagination.before }
+        'property.createdAt > (SELECT p2.created_at FROM properties p2 WHERE p2.id = :beforeId)',
+        { beforeId }
       );
     }
 
+    const limit = (first ?? last ?? 10) + 1;
     query
-      .orderBy('fp.created_at', 'DESC')
-      .addOrderBy('property.id', 'DESC');
-
-    const limit = (pagination?.first ?? pagination?.last ?? 10) + 1;
-    query.take(limit);
+      .orderBy('property.createdAt', 'DESC')
+      .addOrderBy('property.id', 'DESC')
+      .take(limit);
 
     const [properties, totalCount] = await query.getManyAndCount();
 
-    const getCursor = (property: PropertyEntity) => {
-      return Buffer.from(property.id).toString('base64');
-    };
-
-    const connection = buildPaginatedResponse(properties, totalCount, limit - 1, getCursor);
-
-    // Asynchronous cache set
-    this.eventEmitter.emit('cache.set', new CacheSetEvent(
-      'property',
-      cacheKey,
-      connection
-    ));
-
-    return connection;
+    return buildPaginatedResponse(
+      properties,
+      totalCount,
+      limit - 1,
+      (property) => toCursor(property.id)
+    );
   }
 
   async addToFavorites(userId: string, propertyId: string): Promise<void> {

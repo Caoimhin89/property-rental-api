@@ -70,7 +70,7 @@ export class OrganizationResolver {
 
     @ResolveField()
     async members(@Parent() organization: OrganizationEntity) {
-        return this.dataLoader.usersLoader.load(organization.id);
+        return this.organizationService.findMembers(organization.id);
     }
 
     @ResolveField()

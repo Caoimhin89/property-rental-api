@@ -36,7 +36,7 @@ export class DataLoaderService {
     loadMany: (organizationIds: readonly string[], paginationArgs: PaginationInput) => Promise<any>;
   };
   [ORGANIZATION_MEMBERS_LOADER]: {
-    load: (organizationId: string, paginationArgs: PaginationInput) => Promise<any>;
+    load: (organizationId: string) => Promise<any>;
   };
   [USER_MAINTENANCE_REQUESTS_LOADER]: {
     load: (userId: string, paginationArgs?: PaginationInput) => Promise<any>;
@@ -107,8 +107,8 @@ export class DataLoaderService {
     };
 
     this[ORGANIZATION_MEMBERS_LOADER] = {
-      load: (organizationId: string, paginationArgs: PaginationInput) => 
-        this.userService.findByOrganizationId(organizationId, paginationArgs).then(results => results[0]),
+      load: (organizationId: string) => 
+        this.userService.findByOrganizationId(organizationId),
     }
 
     this[PROPERTY_IMAGES_LOADER] = {

@@ -14,7 +14,7 @@ import { Property as PropertyEntity } from './entities/property.entity';
 import { BookingService } from '../booking/booking.service';
 import { LocationService } from '../location/location.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, UnauthorizedException } from '@nestjs/common';
 import { CurrentUser } from 'auth/current-user.decorator';
 import { User } from 'user/entities/user.entity';
 import { OrganizationService } from 'organization/organization.service';
@@ -76,6 +76,27 @@ export class PropertyResolver {
       filter,
       pagination
     });
+    
+    return {
+      ...connection,
+      edges: connection.edges.map(edge => ({
+        ...edge,
+        node: this.propertyService.toGraphQL(edge.node)
+      }))
+    };
+  }
+
+  @Query(() => PropertyConnection)
+  @UseGuards(JwtAuthGuard)
+  async favorites(
+    @CurrentUser() user: User,
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput,
+  ): Promise<PropertyConnection> {
+    if (!user) {
+      throw new UnauthorizedException('User must be authenticated to view favorites');
+    }
+
+    const connection = await this.propertyService.getFavoritesByUserId(user.id, pagination);
     
     return {
       ...connection,

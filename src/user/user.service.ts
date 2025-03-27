@@ -66,26 +66,14 @@ export class UserService {
     return this.createUserConnection(users, totalCount, pagination);
   }
 
-  async findByOrganizationId(
-    organizationId: string,
-    pagination: PaginationInput
-  ) {
-    const { after, before, first, last } = pagination;
+  async findByOrganizationId(organizationId: string) {
     const qb = this.userRepository.createQueryBuilder('user')
       .innerJoin('organization_members', 'member', 'member.user_id = user.id')
       .where('member.organization_id = :organizationId', { organizationId })
       .orderBy('member.created_at', 'DESC');
 
-    if (after) {
-      qb.andWhere('member.created_at < (SELECT created_at FROM organization_members WHERE id = :after)', { after });
-    }
-
-    if (before) {
-      qb.andWhere('member.created_at > (SELECT created_at FROM organization_members WHERE id = :before)', { before });
-    }
-
-    const [users, totalCount] = await qb.getManyAndCount();
-    return this.createUserConnection(users, totalCount, { first, last });
+    const users = await qb.getMany();
+    return users || [];
   }
 
   toGraphQL(user: User): UserType {

@@ -210,7 +210,6 @@ export class OrganizationService {
   async findMembers(organizationId: string): Promise<OrganizationMemberEntity[]> {
     return this.organizationMemberRepository.find({
       where: { organization: { id: organizationId } },
-      relations: ['user'],
     });
   }
 
