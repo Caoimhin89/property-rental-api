@@ -30,7 +30,7 @@ RUN npm ci --only=production
 COPY --from=builder /app/dist ./dist
 
 # Copy SQL files and init script
-COPY schema.sql seed.sql init-db.sh /docker-entrypoint-initdb.d/
+COPY schema.sql seed2.sql init-db.sh /docker-entrypoint-initdb.d/
 
 # Make init script executable
 RUN chmod +x /docker-entrypoint-initdb.d/init-db.sh
