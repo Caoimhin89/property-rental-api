@@ -21,7 +21,7 @@ import { PropertyType } from '../../graphql';
 import { Organization } from '../../organization/entities/organization.entity';
 import { MaintenanceRequest } from 'maintenance/entities/maintenance-request.entity';
 import { Bed as BedEntity } from './bed.entity';
-
+import { User as UserEntity } from '../../user/entities/user.entity';
 @Entity('properties')
 export class Property {
   @PrimaryGeneratedColumn('uuid')
@@ -115,6 +115,20 @@ export class Property {
     }
   })
   amenities?: Amenity[];
+
+  @ManyToMany(() => UserEntity, user => user.favoriteProperties)
+  @JoinTable({
+    name: 'favorite_properties',
+    joinColumn: {
+      name: 'property_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+  })
+  favoritedBy: UserEntity[];
 
   @OneToMany(() => Review, review => review.property)
   reviews?: ReviewConnection;

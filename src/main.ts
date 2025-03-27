@@ -27,6 +27,15 @@ async function bootstrap() {
   });
 
   await app.startAllMicroservices();
+
+  // enable CORS
+  app.enableCors({
+    origin: ['http://localhost:8080'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
+
   await app.listen(3000);
   console.log(`Application is running on: ${await app.getUrl()}`);
 }

@@ -44,6 +44,24 @@ export class PropertyResolver {
     return await this.propertyService.update(id, input, user);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Property)
+  async addToFavorites(
+    @Args('propertyId') propertyId: string,
+    @CurrentUser() user: User
+  ) {
+    return await this.propertyService.addToFavorites(user.id, propertyId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Property)
+  async removeFromFavorites(
+    @Args('propertyId') propertyId: string,
+    @CurrentUser() user: User
+  ) {
+    return await this.propertyService.removeFromFavorites(user.id, propertyId);
+  }
+  
   @Query(() => Property, { nullable: true })
   async propertyById(@Args('id') id: string) {
     return await this.propertyService.findById(id) as PropertyEntity | null;

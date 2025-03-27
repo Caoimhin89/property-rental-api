@@ -16,6 +16,11 @@ import { CacheService } from '../cache/cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CacheSetEvent, CacheInvalidateEvent } from '../cache/cache.events';
 import { Bed } from './entities/bed.entity';
+import { BadRequestException } from '@nestjs/common';
+import { Brackets } from 'typeorm';
+import { buildPaginatedResponse } from '../common/utils';
+import { Connection } from '../common/types/types';
+
 interface PropertyEntityConnection {
   edges: {
     cursor: string;
@@ -73,6 +78,100 @@ export class PropertyService {
     });
     return properties.map(property => this.toGraphQL(property));
   }
+
+  async getFavoritesByUserId(
+    userId: string,
+    pagination?: PaginationInput
+  ): Promise<Connection<PropertyEntity>> {
+    // check cache first
+    const cacheKey = this.cacheService.generateCacheKey('favorites', { userId, pagination });
+    const cached = await this.cacheService.get<Connection<PropertyEntity>>('property', cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const query = this.propertyRepository
+      .createQueryBuilder('property')
+      .innerJoin(
+        'favorite_properties',
+        'fp',
+        'fp.property_id = property.id'
+      )
+      .where('fp.user_id = :userId', { userId });
+
+    if (pagination?.after) {
+      query.andWhere(
+        'fp.created_at < (SELECT created_at FROM favorite_properties WHERE property_id = :after)',
+        { after: pagination.after }
+      );
+    }
+
+    if (pagination?.before) {
+      query.andWhere(
+        'fp.created_at > (SELECT created_at FROM favorite_properties WHERE property_id = :before)',
+        { before: pagination.before }
+      );
+    }
+
+    query
+      .orderBy('fp.created_at', 'DESC')
+      .addOrderBy('property.id', 'DESC');
+
+    const limit = (pagination?.first ?? pagination?.last ?? 10) + 1;
+    query.take(limit);
+
+    const [properties, totalCount] = await query.getManyAndCount();
+
+    const getCursor = (property: PropertyEntity) => {
+      return Buffer.from(property.id).toString('base64');
+    };
+
+    const connection = buildPaginatedResponse(properties, totalCount, limit - 1, getCursor);
+
+    // Asynchronous cache set
+    this.eventEmitter.emit('cache.set', new CacheSetEvent(
+      'property',
+      cacheKey,
+      connection
+    ));
+
+    return connection;
+  }
+
+  async addToFavorites(userId: string, propertyId: string): Promise<void> {
+    const property = await this.propertyRepository.findOneOrFail({ 
+      where: { id: propertyId },
+      relations: ['favoritedBy'] 
+    });
+    
+    property.favoritedBy = property.favoritedBy || [];
+    property.favoritedBy.push({ id: userId } as UserEntity);
+    await this.propertyRepository.save(property);
+  }
+
+  // Remove from favorites
+  async removeFromFavorites(userId: string, propertyId: string): Promise<void> {
+    const property = await this.propertyRepository.findOneOrFail({ 
+      where: { id: propertyId },
+      relations: ['favoritedBy'] 
+    });
+    
+    property.favoritedBy = property.favoritedBy.filter(user => user.id !== userId);
+    await this.propertyRepository.save(property);
+  }
+
+  // Check if property is favorited by user
+  async isFavorited(userId: string, propertyId: string): Promise<boolean> {
+    const count = await this.propertyRepository
+      .createQueryBuilder('property')
+      .innerJoin('property.favoritedBy', 'user')
+      .where('property.id = :propertyId', { propertyId })
+      .andWhere('user.id = :userId', { userId })
+      .getCount();
+    
+    return count > 0;
+  }
+  
 
   async findAll(args: {
     filter?: PropertyFilter;
