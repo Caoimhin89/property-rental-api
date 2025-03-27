@@ -13,7 +13,8 @@ import {
   ORGANIZATION_PROPERTIES_LOADER,
   ORGANIZATION_MEMBERS_LOADER,
   USER_MAINTENANCE_REQUESTS_LOADER,
-  NEARBY_PLACES_LOADER
+  NEARBY_PLACES_LOADER,
+  USER_FAVORITE_PROPERTIES_LOADER
 } from './data-loader.constants';
 import { PaginationInput } from '../graphql';
 import { MaintenanceService } from '../maintenance/maintenance.service';
@@ -46,6 +47,9 @@ export class DataLoaderService {
       paginationArgs?: PaginationInput,
       radiusInMi?: number,
       radiusInKm?: number) => Promise<any>;
+  };
+  [USER_FAVORITE_PROPERTIES_LOADER]: {
+    load: (userId: string) => Promise<any>;
   };
   
   constructor(
@@ -129,6 +133,11 @@ export class DataLoaderService {
           radiusInMi,
           radiusInKm)
     };
+
+    this[USER_FAVORITE_PROPERTIES_LOADER] = {
+      load: (userId: string) => this.propertyService.getFavoritesByUserId(userId)
+    };
+
   }
 
   clear(): void {
