@@ -14,6 +14,7 @@ import { OrganizationModule } from '../organization/organization.module';
 import { AmenityModule } from '../amenity/amenity.module';
 import { CacheModule } from '../cache/cache.module';
 import { Bed } from './entities/bed.entity';
+import { NearbyPlaceModule } from '../nearby-place/nearby-place.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -29,7 +30,8 @@ import { Bed } from './entities/bed.entity';
     forwardRef(() => AmenityModule),
     forwardRef(() => CacheModule),
     CommonModule,
-    LocationModule
+    LocationModule,
+    NearbyPlaceModule
   ],
   providers: [PropertyService, PropertyResolver],
   exports: [PropertyService],

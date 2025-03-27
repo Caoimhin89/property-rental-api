@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { NearbyPlace } from './entities/nearby-place.entity';
 import { NearbyPlaceConnection, NearbyPlaceEdge } from '../graphql';
-import { milesToKilometers, toCursor } from '../common/utils';
+import { milesToKilometers, toCursor, fromCursor, buildPaginatedResponse } from '../common/utils';
 import { Location as LocationEntity } from 'location/entities/location.entity';
 import { PaginationInput } from '../graphql';
 import { Connection } from '../common/types/types';
@@ -34,82 +34,57 @@ export class NearbyPlaceService {
 
     const qb = this.placeRepository
       .createQueryBuilder('place')
-      .innerJoin('place.location', 'location')
-      .where(`
-        ST_DWithin(
-          location.coordinates::geography,
-          ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
-          :radius
-        )
-      `, {
-        latitude: location.latitude,
-        longitude: location.longitude,
+      .innerJoinAndSelect('place.location', 'loc')
+      .select([
+        'place.id',
+        'place.name',
+        'place.type',
+        'place.distance',
+        'place.createdAt',
+        'place.updatedAt',
+        'loc'
+      ])
+      .addSelect(
+        `ST_Distance(
+          ST_SetSRID(ST_MakePoint(:sourceLong, :sourceLat), 4326)::geography,
+          loc.coordinates::geography
+        )`,
+        'calculated_distance'
+      )
+      .setParameters({
+        sourceLat: location.latitude,
+        sourceLong: location.longitude,
         radius: radiusInMeters
       })
-      .orderBy('ST_Distance(location.coordinates, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326))', 'ASC');
+      .where(
+        `ST_DWithin(
+          ST_SetSRID(ST_MakePoint(:sourceLong, :sourceLat), 4326)::geography,
+          loc.coordinates::geography,
+          :radius
+        )`
+      )
+      .orderBy('calculated_distance', 'ASC')
+      .addOrderBy('place.id', 'ASC');
 
-    // Handle cursor-based pagination
     if (after) {
-      qb.andWhere(`
-        ST_Distance(location.coordinates, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) > 
-        (SELECT ST_Distance(l2.coordinates, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326))
-         FROM nearby_places np2
-         INNER JOIN locations l2 ON l2.nearby_place_id = np2.id
-         WHERE np2.id = :after)
-      `, { after });
+      qb.andWhere('place.id > :after', { after: fromCursor(after) });
     }
 
     if (before) {
-      qb.andWhere(`
-        ST_Distance(location.coordinates, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) <
-        (SELECT ST_Distance(l2.coordinates, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326))
-         FROM nearby_places np2
-         INNER JOIN locations l2 ON l2.nearby_place_id = np2.id
-         WHERE np2.id = :before)
-      `, { before });
+      qb.andWhere('place.id < :before', { before: fromCursor(before) });
     }
 
-    // Get one extra item to determine if there are more pages
     const limit = (first ?? last ?? 10) + 1;
     qb.take(limit);
 
-    if (last) {
-      qb.orderBy('ST_Distance(location.coordinates, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326))', 'DESC');
-    }
-
     const [places, totalCount] = await qb.getManyAndCount();
-    let hasNextPage = false;
-    let hasPreviousPage = false;
 
-    // Remove the extra item and set hasNextPage/hasPreviousPage
-    if (places.length > (first ?? last ?? 10)) {
-      if (first) {
-        hasNextPage = true;
-        places.pop();
-      } else if (last) {
-        hasPreviousPage = true;
-        places.pop();
-      }
-    }
-
-    // Reverse the results if we're paginating from the end
-    const orderedPlaces = last ? places.reverse() : places;
-
-    const edges = orderedPlaces.map(place => ({
-      cursor: toCursor(place.id),
-      node: place,
-    }));
-
-    return {
-      edges,
-      pageInfo: {
-        hasNextPage,
-        hasPreviousPage,
-        startCursor: edges[0]?.cursor,
-        endCursor: edges[edges.length - 1]?.cursor,
-      },
+    return buildPaginatedResponse(
+      places,
       totalCount,
-    };
+      limit - 1,
+      (place) => toCursor(place.id)
+    );
   }
   
 

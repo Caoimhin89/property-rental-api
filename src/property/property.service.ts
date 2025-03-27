@@ -126,7 +126,7 @@ export class PropertyService {
     );
   }
 
-  async addToFavorites(userId: string, propertyId: string): Promise<void> {
+  async addToFavorites(userId: string, propertyId: string): Promise<PropertyEntity> {
     const property = await this.propertyRepository.findOneOrFail({ 
       where: { id: propertyId },
       relations: ['favoritedBy'] 
@@ -134,7 +134,7 @@ export class PropertyService {
     
     property.favoritedBy = property.favoritedBy || [];
     property.favoritedBy.push({ id: userId } as UserEntity);
-    await this.propertyRepository.save(property);
+    return await this.propertyRepository.save(property);
   }
 
   // Remove from favorites
@@ -621,12 +621,16 @@ export class PropertyService {
     qb: SelectQueryBuilder<PropertyEntity>,
     filter: PropertyFilter
   ): void {
-    if (filter.numBedrooms) {
+    if (filter.numBedrooms?.min) {
       qb.andWhere('property.numBedrooms >= :minBedrooms', {
         minBedrooms: filter.numBedrooms.min
       });
     }
-    if (filter.numBathrooms) {
+    if (filter.numBathrooms?.max) {
+      qb.andWhere('property.numBathrooms <= :maxBathrooms', {
+        maxBathrooms: filter.numBathrooms.max
+      });
+    } else if (typeof filter.numBathrooms === 'number') {
       qb.andWhere('property.numBathrooms >= :minBathrooms', {
         minBathrooms: filter.numBathrooms
       });

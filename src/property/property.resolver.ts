@@ -18,6 +18,7 @@ import { UseGuards, UnauthorizedException } from '@nestjs/common';
 import { CurrentUser } from 'auth/current-user.decorator';
 import { User } from 'user/entities/user.entity';
 import { OrganizationService } from 'organization/organization.service';
+import { NearbyPlaceService } from 'nearby-place/nearby-place.service';
 @Resolver(() => Property)
 export class PropertyResolver {
   constructor(
@@ -25,7 +26,8 @@ export class PropertyResolver {
     private readonly dataLoader: DataLoaderService,
     private readonly bookingService: BookingService,
     private readonly locationService: LocationService,
-    private readonly organizationService: OrganizationService
+    private readonly organizationService: OrganizationService,
+    private readonly nearbyPlaceService: NearbyPlaceService
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -44,13 +46,14 @@ export class PropertyResolver {
     return await this.propertyService.update(id, input, user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => Property)
+  @UseGuards(JwtAuthGuard)
   async addToFavorites(
     @Args('propertyId') propertyId: string,
     @CurrentUser() user: User
-  ) {
-    return await this.propertyService.addToFavorites(user.id, propertyId);
+  ): Promise<Property> {
+    const property = await this.propertyService.addToFavorites(user.id, propertyId);
+    return this.propertyService.toGraphQL(property);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -205,10 +208,6 @@ export class PropertyResolver {
     if (!location) {
       throw new Error(`Location not found for property ${property.id}`);
     }
-    return this.dataLoader.nearbyPlacesLoader.load(
-      location,
-      pagination,
-      radiusInMi,
-      radiusInKm);
+    return this.nearbyPlaceService.findWithinRadiusOfLocation(location, pagination, radiusInMi, radiusInKm);
   }
 }
