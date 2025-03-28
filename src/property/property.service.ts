@@ -166,6 +166,7 @@ export class PropertyService {
     pagination?: PaginationInput;
   }): Promise<PropertyEntityConnection> {
     const cacheKey = this.cacheService.generateCacheKey('list', args);
+    this.logger.debug('Finding all properties', 'PropertyService', { filter: args.filter, pagination: args.pagination });
     
     try {
       const cached = await this.cacheService.get<PropertyEntityConnection>('property', cacheKey);
@@ -182,6 +183,7 @@ export class PropertyService {
         .leftJoinAndSelect('property.organization', 'organization');
 
       if (filter) {
+        this.applyOrganizationFilter(qb, filter);
         this.applyPropertyTypeFilter(qb, filter);
         this.applyPriceFilter(qb, filter);
         this.applyYearBuiltFilter(qb, filter);
@@ -220,6 +222,7 @@ export class PropertyService {
         .leftJoinAndSelect('property.organization', 'organization');
 
       if (filter) {
+        this.applyOrganizationFilter(qb, filter);
         this.applyPropertyTypeFilter(qb, filter);
         this.applyPriceFilter(qb, filter);
         this.applyYearBuiltFilter(qb, filter);
@@ -594,6 +597,17 @@ export class PropertyService {
     // this.logger.debug('PropertyConnection', 'PropertyService', { connection });
 
     return connection;
+  }
+
+  private applyOrganizationFilter(
+    qb: SelectQueryBuilder<PropertyEntity>,
+    filter: PropertyFilter
+  ): void {
+    if (filter.organizationIds) {
+      qb.andWhere('property.organization_id IN (:...organizationIds)', {
+        organizationIds: filter.organizationIds
+      });
+    }
   }
 
   private applyStoriesFilter(

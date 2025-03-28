@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { Location } from './entities/location.entity';
 import { CacheService } from '../cache/cache.service';
 import { LoggerService } from '../common/services/logger.service';
@@ -21,6 +21,26 @@ export class LocationService {
     private readonly eventEmitter: EventEmitter2,
     private readonly geocodingService: GeocodingService,
   ) {}
+
+  async findWithinRadius(latitude: number, longitude: number, radius: number): Promise<Location[]> {
+    const radiusInMeters = radius * 1000; // Convert km to meters for PostGIS
+
+    return await this.locationRepository
+      .createQueryBuilder('location')
+      .where(
+        `ST_DWithin(
+          location.coordinates::geography,
+          ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
+          :radius
+        )`,
+        {
+          latitude,
+          longitude,
+          radius: radiusInMeters
+        }
+      )
+      .getMany();
+  }
 
   async findByPropertyId(propertyId: string): Promise<Location | null> {
     const cacheKey = this.cacheService.generateCacheKey('single', propertyId);
@@ -47,6 +67,12 @@ export class LocationService {
     }
 
     return location;
+  }
+
+  async findByNearbyPlaceId(nearbyPlaceId: string): Promise<Location | null> {
+    return await this.locationRepository.findOne({
+      where: { nearbyPlace: { id: nearbyPlaceId } },
+    });
   }
 
   async searchLocations(searchTerm: string): Promise<Location[]> {

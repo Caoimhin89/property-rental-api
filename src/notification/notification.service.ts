@@ -54,7 +54,8 @@ export class NotificationService implements OnModuleInit {
   async findAll(
     userId: string,
     filter?: NotificationFilter,
-    pagination?: PaginationInput) {
+    pagination?: PaginationInput
+  ) {
     const query = this.notificationRepository.createQueryBuilder('notification')
       .where('notification.userId = :userId', { userId })
       .orderBy('notification.createdAt', 'DESC');
@@ -63,6 +64,8 @@ export class NotificationService implements OnModuleInit {
       query.andWhere('notification.isRead = :isRead', { isRead: filter.read });
     }
 
+    // Handle cursor-based pagination
+    let hasPreviousPage = false;
     if (pagination?.after) {
       const decodedCursor = Buffer.from(pagination.after, 'base64').toString();
       const [timestamp, id] = decodedCursor.split(':');
@@ -70,6 +73,13 @@ export class NotificationService implements OnModuleInit {
         '(notification.createdAt, notification.id) < (:timestamp, :id)',
         { timestamp: new Date(timestamp), id }
       );
+      
+      // Check if there are previous records
+      const previousCount = await query.clone()
+        .andWhere('(notification.createdAt, notification.id) > (:timestamp, :id)', 
+          { timestamp: new Date(timestamp), id })
+        .getCount();
+      hasPreviousPage = previousCount > 0;
     }
 
     const limit = pagination?.first || 10;
@@ -92,6 +102,8 @@ export class NotificationService implements OnModuleInit {
       edges,
       pageInfo: {
         hasNextPage,
+        hasPreviousPage,
+        startCursor: edges[0]?.cursor,
         endCursor: edges[edges.length - 1]?.cursor,
       },
       totalCount,

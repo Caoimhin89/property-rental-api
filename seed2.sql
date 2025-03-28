@@ -58,7 +58,8 @@ INSERT INTO beds (id, property_id, bed_type, bed_size, room, created_at, updated
 INSERT INTO nearby_places (id, name, type, distance, created_at, updated_at) VALUES
 ('811e76d5-2a9a-4671-8fd3-a0ad47a011ed'::uuid, 'Beach Club', 'ENTERTAINMENT', 0.5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('92d1bdf8-9da5-4f4c-bee8-61fe3ff03657'::uuid, 'Central Park', 'PARK', 1.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('633884eb-3885-46c7-972b-30e4bd3c4a8f'::uuid, 'Forest Park', 'PARK', 2.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('633884eb-3885-46c7-972b-30e4bd3c4a8f'::uuid, 'Forest Park', 'PARK', 2.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('d4a49b85-8d42-42dd-8f69-051c3a47b0f5'::uuid, 'Oregon Rail Heritage Center', 'Cultural', 0.0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Favorite Properties
 INSERT INTO favorite_properties (user_id, property_id, created_at, updated_at) VALUES
@@ -76,7 +77,8 @@ INSERT INTO locations (id, property_id, nearby_place_id, address, postal_code, p
 ('2d574321-e10c-4919-9e22-cb6a79b360a5'::uuid, NULL, '633884eb-3885-46c7-972b-30e4bd3c4a8f'::uuid, '789 Granville Street', 'V6Z 1K3', NULL, 'Vancouver', 'Greater Vancouver', 'British Columbia', 'Canada', 49.2827, -123.1207, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('7f9c32f0-45e4-4b4a-8f1e-9c8d321b5678'::uuid, '3036c96e-3ec0-4290-a457-8f8a6ee7d972'::uuid, NULL, '1000 5th Avenue', '10028', NULL, 'New York', 'Manhattan', 'New York', 'USA', 40.7831, -73.9712, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('9e3e67c1-1f47-4b75-9f41-7b5a12c7b7e9'::uuid, 'cf530619-6873-4dca-86f4-314d239595b1'::uuid, NULL, '120 Arts District Blvd', '90013', NULL, 'Los Angeles', 'Los Angeles', 'California', 'USA', 34.0403, -118.2352, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('b7d9e123-4567-89ab-cdef-123456789abc'::uuid, '314f7a83-48c7-412f-8f64-5f2f5c307f31'::uuid, NULL, '456 Maple Drive', '60062', NULL, 'Northbrook', 'Cook', 'Illinois', 'USA', 42.1275, -87.8290, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('b7d9e123-4567-89ab-cdef-123456789abc'::uuid, '314f7a83-48c7-412f-8f64-5f2f5c307f31'::uuid, NULL, '456 Maple Drive', '60062', NULL, 'Northbrook', 'Cook', 'Illinois', 'USA', 42.1275, -87.8290, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('b8f2d6a1-4c37-4e1c-a9c5-89d2f1d6b7e3'::uuid, NULL, 'd4a49b85-8d42-42dd-8f69-051c3a47b0f5'::uuid, '2250 SE Water Ave', '97214', NULL, 'Portland', 'Multnomah County', 'Oregon', 'USA', 45.507306, -122.661722, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Blocked Dates
 INSERT INTO blocked_dates (id, property_id, start_date, end_date, reason, created_at, updated_at) VALUES

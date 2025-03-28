@@ -14,9 +14,6 @@ export class NearbyPlace {
   @OneToOne(() => LocationEntity, location => location.nearbyPlace, { cascade: true })
   location: LocationEntity;
 
-  @Column('uuid', { name: 'location_id' })
-  locationId: string;
-
   @Column()
   name: string;
 

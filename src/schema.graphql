@@ -630,6 +630,7 @@ type NearbyPlace {
   name: String!
   type: String!
   distance: Float! # in kilometers
+  location: Location!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
