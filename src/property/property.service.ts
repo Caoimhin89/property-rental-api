@@ -175,34 +175,7 @@ export class PropertyService {
         return cached;
       }
 
-      const { filter, pagination } = args;
-      const qb = this.propertyRepository.createQueryBuilder('property');
-
-      qb.leftJoinAndSelect('property.location', 'location')
-        .leftJoinAndSelect('property.amenities', 'amenities')
-        .leftJoinAndSelect('property.organization', 'organization');
-
-      if (filter) {
-        this.applyOrganizationFilter(qb, filter);
-        this.applyPropertyTypeFilter(qb, filter);
-        this.applyPriceFilter(qb, filter);
-        this.applyYearBuiltFilter(qb, filter);
-        this.applyRoomFilter(qb, filter);
-        this.applyStoriesFilter(qb, filter);
-        this.applyAreaFilter(qb, filter);
-        this.applyLocationFilter(qb, filter);
-        this.applyAmenitiesFilter(qb, filter);
-        this.applySearchFilter(qb, filter);
-        this.applySortingRules(qb, filter);
-        this.applyAvailabilityFilters(qb, filter);
-      }
-
-      if (pagination) {
-        this.applyPagination(qb, pagination);
-      }
-
-      const [properties, totalCount] = await qb.getManyAndCount();
-      const connection = this.createPropertyConnection(properties, totalCount, pagination);
+      const connection = await this.executePropertyQuery(args);
 
       // Asynchronous cache set
       this.eventEmitter.emit('cache.set', new CacheSetEvent(
@@ -214,35 +187,46 @@ export class PropertyService {
       return connection;
     } catch (error) {
       this.logger.error('Cache operation failed', 'PropertyService', error);
-      const { filter, pagination } = args;
-      const qb = this.propertyRepository.createQueryBuilder('property');
-
-      qb.leftJoinAndSelect('property.location', 'location')
-        .leftJoinAndSelect('property.amenities', 'amenities')
-        .leftJoinAndSelect('property.organization', 'organization');
-
-      if (filter) {
-        this.applyOrganizationFilter(qb, filter);
-        this.applyPropertyTypeFilter(qb, filter);
-        this.applyPriceFilter(qb, filter);
-        this.applyYearBuiltFilter(qb, filter);
-        this.applyRoomFilter(qb, filter);
-        this.applyStoriesFilter(qb, filter);
-        this.applyAreaFilter(qb, filter);
-        this.applyLocationFilter(qb, filter);
-        this.applyAmenitiesFilter(qb, filter);
-        this.applySearchFilter(qb, filter);
-        this.applySortingRules(qb, filter);
-        this.applyAvailabilityFilters(qb, filter);
-      }
-
-      if (pagination) {
-        this.applyPagination(qb, pagination);
-      }
-
-      const [properties, totalCount] = await qb.getManyAndCount();
-      return this.createPropertyConnection(properties, totalCount, pagination);
+      return await this.executePropertyQuery(args);
     }
+  }
+
+  private async executePropertyQuery(args: {
+    filter?: PropertyFilter;
+    pagination?: PaginationInput;
+  }): Promise<PropertyEntityConnection> {
+    const { filter, pagination } = args;
+    const qb = this.propertyRepository.createQueryBuilder('property');
+
+    qb.leftJoinAndSelect('property.location', 'location')
+      .leftJoinAndSelect('property.amenities', 'amenities')
+      .leftJoinAndSelect('property.organization', 'organization');
+
+    if (filter) {
+      this.applyFilters(qb, filter);
+    }
+
+    if (pagination) {
+      this.applyPagination(qb, pagination);
+    }
+
+    const [properties, totalCount] = await qb.getManyAndCount();
+    return this.createPropertyConnection(properties, totalCount, pagination);
+  }
+
+  private applyFilters(qb: SelectQueryBuilder<PropertyEntity>, filter: PropertyFilter): void {
+    this.applyOrganizationFilter(qb, filter);
+    this.applyPropertyTypeFilter(qb, filter);
+    this.applyPriceFilter(qb, filter);
+    this.applyYearBuiltFilter(qb, filter);
+    this.applyRoomFilter(qb, filter);
+    this.applyStoriesFilter(qb, filter);
+    this.applyAreaFilter(qb, filter);
+    this.applyLocationFilter(qb, filter);
+    this.applyAmenitiesFilter(qb, filter);
+    this.applySearchFilter(qb, filter);
+    this.applySortingRules(qb, filter);
+    this.applyAvailabilityFilters(qb, filter);
   }
 
   async findByOrganizationId(
