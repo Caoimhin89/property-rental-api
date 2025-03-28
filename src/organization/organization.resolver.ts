@@ -45,6 +45,12 @@ export class OrganizationResolver {
         return this.organizationService.findByUserId(user.id);
     }
 
+    @Query(() => [Organization])
+    @UseGuards(JwtAuthGuard)
+    async organizationKPIs(@Args('organizationId') organizationId: string) {
+        return this.dataLoader.organizationKPIsLoader.load(organizationId);
+    }
+
     @UseGuards(JwtAuthGuard)
     @Mutation(() => Organization)
     async createOrganization(
@@ -89,5 +95,10 @@ export class OrganizationResolver {
             })) : [],
             totalCount: connection.totalCount || 0
         };
+    }
+
+    @ResolveField()
+    async kpis(@Parent() organization: Organization) {
+        return this.dataLoader.organizationKPIsLoader.load(organization.id);
     }
 }

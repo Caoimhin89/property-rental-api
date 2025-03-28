@@ -12,6 +12,7 @@ import { PaginationInput } from '../graphql';
 import { buildPaginatedResponse } from '../common/utils';
 import { Connection } from '../common/types/types';
 import { Property } from 'property/entities/property.entity';
+import { BookingStatus } from '../graphql';
 
 @Injectable()
 export class BookingService {
@@ -159,6 +160,113 @@ export class BookingService {
       pagination?.first || 10,
       (item) => Buffer.from(item.createdAt.toISOString()).toString('base64')
     );
+  }
+
+  async getKPIsByOrganizationId(organizationId: string) {
+    const currentDate = new Date();
+    const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const currentMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const previousMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const previousMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+
+    const stats = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoin('properties', 'property', 'property.id = booking.property_id')
+      .select([
+        // Current Month Stats
+        'COUNT(CASE WHEN booking.start_date >= :currentMonthStart AND booking.end_date <= :currentMonthEnd AND booking.status = :confirmed THEN 1 END) as "totalCurrentMonthConfirmedBookings"',
+        'COUNT(CASE WHEN booking.start_date >= :currentMonthStart AND booking.end_date <= :currentMonthEnd AND booking.status = :cancelled THEN 1 END) as "totalCurrentMonthCancelledBookings"',
+        'COUNT(CASE WHEN booking.start_date >= :currentMonthStart AND booking.end_date <= :currentMonthEnd AND booking.status = :pending THEN 1 END) as "totalCurrentMonthPendingBookings"',
+        'COUNT(CASE WHEN booking.start_date >= :currentMonthStart AND booking.end_date <= :currentMonthEnd AND booking.status = :rejected THEN 1 END) as "totalCurrentMonthRejectedBookings"',
+        
+        // Previous Month Stats
+        'COUNT(CASE WHEN booking.start_date >= :previousMonthStart AND booking.end_date <= :previousMonthEnd AND booking.status = :confirmed THEN 1 END) as "totalPreviousMonthConfirmedBookings"',
+        'COUNT(CASE WHEN booking.start_date >= :previousMonthStart AND booking.end_date <= :previousMonthEnd AND booking.status = :cancelled THEN 1 END) as "totalPreviousMonthCancelledBookings"',
+        'COUNT(CASE WHEN booking.start_date >= :previousMonthStart AND booking.end_date <= :previousMonthEnd AND booking.status = :pending THEN 1 END) as "totalPreviousMonthPendingBookings"',
+        'COUNT(CASE WHEN booking.start_date >= :previousMonthStart AND booking.end_date <= :previousMonthEnd AND booking.status = :rejected THEN 1 END) as "totalPreviousMonthRejectedBookings"',
+        
+        // Lifetime Stats
+        'COUNT(CASE WHEN booking.status = :confirmed THEN 1 END) as "totalLifetimeConfirmedBookings"',
+        'COUNT(CASE WHEN booking.status = :cancelled THEN 1 END) as "totalLifetimeCancelledBookings"',
+        'COUNT(CASE WHEN booking.status = :rejected THEN 1 END) as "totalLifetimeRejectedBookings"'
+      ])
+      .where('property.organization_id = :organizationId', { organizationId })
+      .setParameters({
+        currentMonthStart,
+        currentMonthEnd,
+        previousMonthStart,
+        previousMonthEnd,
+        confirmed: BookingStatus.CONFIRMED,
+        cancelled: BookingStatus.CANCELLED,
+        pending: BookingStatus.PENDING,
+        rejected: BookingStatus.REJECTED
+      })
+      .getRawOne();
+
+    // Convert string values to numbers and provide defaults
+    return {
+      totalCurrentMonthConfirmedBookings: parseInt(stats.totalCurrentMonthConfirmedBookings) || 0,
+      totalCurrentMonthCancelledBookings: parseInt(stats.totalCurrentMonthCancelledBookings) || 0,
+      totalCurrentMonthPendingBookings: parseInt(stats.totalCurrentMonthPendingBookings) || 0,
+      totalCurrentMonthRejectedBookings: parseInt(stats.totalCurrentMonthRejectedBookings) || 0,
+      totalPreviousMonthConfirmedBookings: parseInt(stats.totalPreviousMonthConfirmedBookings) || 0,
+      totalPreviousMonthCancelledBookings: parseInt(stats.totalPreviousMonthCancelledBookings) || 0,
+      totalPreviousMonthPendingBookings: parseInt(stats.totalPreviousMonthPendingBookings) || 0,
+      totalPreviousMonthRejectedBookings: parseInt(stats.totalPreviousMonthRejectedBookings) || 0,
+      totalLifetimeConfirmedBookings: parseInt(stats.totalLifetimeConfirmedBookings) || 0,
+      totalLifetimeCancelledBookings: parseInt(stats.totalLifetimeCancelledBookings) || 0,
+      totalLifetimeRejectedBookings: parseInt(stats.totalLifetimeRejectedBookings) || 0
+    };
+  }
+
+  async getRevenueKPIsByOrganizationId(organizationId: string) {
+    const currentDate = new Date();
+    const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const currentMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const previousMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const previousMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+    const yearStart = new Date(currentDate.getFullYear(), 0, 1); // January 1st of current year
+
+    const stats = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoin('properties', 'property', 'property.id = booking.property_id')
+      .select([
+        // Current Month Revenue
+        'SUM(CASE WHEN booking.start_date >= :currentMonthStart AND booking.end_date <= :currentMonthEnd THEN booking.total_price ELSE 0 END) as "currentMonthRevenue"',
+        // Previous Month Revenue
+        'SUM(CASE WHEN booking.start_date >= :previousMonthStart AND booking.end_date <= :previousMonthEnd THEN booking.total_price ELSE 0 END) as "previousMonthRevenue"',
+        // Year to Date Revenue
+        'SUM(CASE WHEN booking.start_date >= :yearStart AND booking.end_date <= :currentDate THEN booking.total_price ELSE 0 END) as "yearToDateRevenue"'
+      ])
+      .where('property.organization_id = :organizationId', { organizationId })
+      .andWhere('booking.status = :confirmed') // Only count confirmed bookings
+      .setParameters({
+        organizationId,
+        currentMonthStart,
+        currentMonthEnd,
+        previousMonthStart,
+        previousMonthEnd,
+        yearStart,
+        currentDate,
+        confirmed: BookingStatus.CONFIRMED
+      })
+      .getRawOne();
+
+    return {
+      currentMonthRevenue: parseFloat(stats.currentMonthRevenue) || 0,
+      previousMonthRevenue: parseFloat(stats.previousMonthRevenue) || 0,
+      yearToDateRevenue: parseFloat(stats.yearToDateRevenue) || 0,
+      revenueGrowth: this.calculateRevenueGrowth(
+        parseFloat(stats.currentMonthRevenue) || 0,
+        parseFloat(stats.previousMonthRevenue) || 0
+      )
+    };
+  }
+
+  // Helper function to calculate revenue growth percentage
+  private calculateRevenueGrowth(currentRevenue: number, previousRevenue: number): number {
+    if (previousRevenue === 0) return currentRevenue > 0 ? 100 : 0;
+    return ((currentRevenue - previousRevenue) / previousRevenue) * 100;
   }
 
   async createBooking(propertyId: string, input: CreateBookingInput): Promise<BookingResponse> {

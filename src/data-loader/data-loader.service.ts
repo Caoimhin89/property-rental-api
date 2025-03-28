@@ -6,6 +6,7 @@ import { ReviewService } from '../review/review.service';
 import { PropertyService } from '../property/property.service';
 import { UserService } from '../user/user.service';
 import { LocationService } from '../location/location.service';
+import { BookingService } from '../booking/booking.service';
 import {
   AMENITIES_LOADER, IMAGES_LOADER, PROPERTY_IMAGES_LOADER,
   REVIEWS_LOADER, PROPERTIES_LOADER,
@@ -14,7 +15,8 @@ import {
   ORGANIZATION_MEMBERS_LOADER,
   USER_MAINTENANCE_REQUESTS_LOADER,
   NEARBY_PLACES_LOADER,
-  USER_FAVORITE_PROPERTIES_LOADER
+  USER_FAVORITE_PROPERTIES_LOADER,
+  ORGANIZATION_KPIS_LOADER
 } from './data-loader.constants';
 import { PaginationInput } from '../graphql';
 import { MaintenanceService } from '../maintenance/maintenance.service';
@@ -51,6 +53,9 @@ export class DataLoaderService {
   [USER_FAVORITE_PROPERTIES_LOADER]: {
     load: (userId: string) => Promise<any>;
   };
+  [ORGANIZATION_KPIS_LOADER]: {
+    load: (organizationId: string) => Promise<any>;
+  };
   
   constructor(
     private readonly amenityService: AmenityService,
@@ -60,7 +65,8 @@ export class DataLoaderService {
     private readonly userService: UserService,
     private readonly locationService: LocationService,
     private readonly maintenanceService: MaintenanceService,
-    private readonly nearbyPlaceService: NearbyPlaceService
+    private readonly nearbyPlaceService: NearbyPlaceService,
+    private readonly bookingService: BookingService
   ) {
     this[AMENITIES_LOADER] = new DataLoader(
       (propertyIds: readonly string[]) => 
@@ -136,6 +142,53 @@ export class DataLoaderService {
 
     this[USER_FAVORITE_PROPERTIES_LOADER] = {
       load: (userId: string) => this.propertyService.getFavoritesByUserId(userId)
+    };
+
+    this[ORGANIZATION_KPIS_LOADER] = {
+      load: async (organizationId: string) => {
+        // fetch all the kpis for the organization
+        const [propertyStats, maintenanceStats, bookingStats, revenueStats] = await Promise.all([
+          this.propertyService.getKPIsByOrganizationId(organizationId),
+          this.maintenanceService.getKPIsByOrganizationId(organizationId),
+          this.bookingService.getKPIsByOrganizationId(organizationId),
+          this.bookingService.getRevenueKPIsByOrganizationId(organizationId)
+        ]);
+
+        // merge the kpis into a single object
+        const kpis = {
+          propertyKpis: {
+            totalProperties: propertyStats.totalProperties || 0,
+          },
+          maintenanceKpis: {
+            totalCurrentMonthMaintenanceRequests: maintenanceStats.totalCurrentMonthMaintenanceRequests || 0,
+            totalCurrentMonthMaintenanceRequestsCompleted: maintenanceStats.totalCurrentMonthMaintenanceRequestsCompleted || 0,
+            totalCurrentMonthMaintenanceRequestsPending: maintenanceStats.totalCurrentMonthMaintenanceRequestsPending || 0,
+            totalCurrentMonthMaintenanceRequestsInProgress: maintenanceStats.totalCurrentMonthMaintenanceRequestsInProgress || 0,
+            totalPreviousMonthMaintenanceRequests: maintenanceStats.totalPreviousMonthMaintenanceRequests || 0,
+            totalPreviousMonthMaintenanceRequestsCompleted: maintenanceStats.totalPreviousMonthMaintenanceRequestsCompleted || 0,
+            totalPreviousMonthMaintenanceRequestsPending: maintenanceStats.totalPreviousMonthMaintenanceRequestsPending || 0,
+            totalPreviousMonthMaintenanceRequestsInProgress: maintenanceStats.totalPreviousMonthMaintenanceRequestsInProgress || 0,
+          },
+          bookingKpis: {
+            totalCurrentMonthConfirmedBookings: bookingStats.totalCurrentMonthConfirmedBookings || 0,
+            totalCurrentMonthCancelledBookings: bookingStats.totalCurrentMonthCancelledBookings || 0,
+            totalCurrentMonthPendingBookings: bookingStats.totalCurrentMonthPendingBookings || 0,
+            totalCurrentMonthRejectedBookings: bookingStats.totalCurrentMonthRejectedBookings || 0,
+            totalPreviousMonthConfirmedBookings: bookingStats.totalPreviousMonthConfirmedBookings || 0,
+            totalPreviousMonthCancelledBookings: bookingStats.totalPreviousMonthCancelledBookings || 0,
+            totalPreviousMonthRejectedBookings: bookingStats.totalPreviousMonthRejectedBookings || 0,
+            totalLifetimeConfirmedBookings: bookingStats.totalLifetimeConfirmedBookings || 0,
+            totalLifetimeCancelledBookings: bookingStats.totalLifetimeCancelledBookings || 0,
+            totalLifetimeRejectedBookings: bookingStats.totalLifetimeRejectedBookings || 0,
+          },
+          revenueKpis: {
+            currentMonthRevenue: revenueStats.currentMonthRevenue || 0,
+            lastMonthRevenue: revenueStats.previousMonthRevenue || 0,
+            yearToDateRevenue: revenueStats.yearToDateRevenue || 0,
+          }
+        };
+        return kpis;
+      }
     };
 
   }

@@ -318,6 +318,7 @@ type Query {
     pagination: PaginationInput
   ): OrganizationConnection!
   myOrganizations: [Organization!]!
+  organizationKPIs(organizationId: ID!): OrganizationKPI!
   image(id: ID!): Image
   images(
     pagination: PaginationInput
@@ -914,6 +915,47 @@ type PriceRule {
   description: String
 }
 
+type MaintenanceRequestKPI {
+  totalCurrentMonthMaintenanceRequests: Int!
+  totalCurrentMonthMaintenanceRequestsCompleted: Int!
+  totalCurrentMonthMaintenanceRequestsInProgress: Int!
+  totalCurrentMonthMaintenanceRequestsPending: Int!
+  totalPreviousMonthMaintenanceRequests: Int!
+  totalPreviousMonthMaintenanceRequestsCompleted: Int!
+  totalPreviousMonthMaintenanceRequestsInProgress: Int!
+  totalPreviousMonthMaintenanceRequestsPending: Int!
+}
+
+type RevenueKPI {
+  currentMonthRevenue: Float!
+  lastMonthRevenue: Float!
+  yearToDateRevenue: Float!
+}
+
+type BookingKPI {
+  totalCurrentMonthConfirmedBookings: Int!
+  totalCurrentMonthCancelledBookings: Int!
+  totalCurrentMonthPendingBookings: Int!
+  totalCurrentMonthRejectedBookings: Int!
+  totalPreviousMonthConfirmedBookings: Int!
+  totalPreviousMonthCancelledBookings: Int!
+  totalPreviousMonthRejectedBookings: Int!
+  totalLifetimeConfirmedBookings: Int!
+  totalLifetimeCancelledBookings: Int!
+  totalLifetimeRejectedBookings: Int!
+}
+
+type PropertyKPI {
+  totalProperties: Int!
+}
+
+type OrganizationKPI {
+  propertyKpis: PropertyKPI!
+  bookingKpis: BookingKPI!
+  maintenanceKpis: MaintenanceRequestKPI!
+  revenueKpis: RevenueKPI!
+}
+
 type Organization {
   id: ID!
   name: String!
@@ -921,6 +963,7 @@ type Organization {
   primaryUser: OrganizationMember
   members: [OrganizationMember!]!
   properties: PropertyConnection!
+  kpis: OrganizationKPI
   createdAt: DateTime!
 }
 

@@ -10,3 +10,4 @@ export const PROPERTY_IMAGES_LOADER = 'propertyImagesLoader';
 export const USER_MAINTENANCE_REQUESTS_LOADER = 'userMaintenanceRequestsLoader';
 export const NEARBY_PLACES_LOADER = 'nearbyPlacesLoader';
 export const USER_FAVORITE_PROPERTIES_LOADER = 'userFavoritePropertiesLoader';
+export const ORGANIZATION_KPIS_LOADER = 'organizationKPIsLoader';

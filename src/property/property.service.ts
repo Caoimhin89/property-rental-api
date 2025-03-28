@@ -346,6 +346,17 @@ export class PropertyService {
     });
   }
 
+  async getKPIsByOrganizationId(organizationId: string): Promise<{
+    totalProperties: number;
+    ids: string[];
+  }> {
+    const [properties, totalCount] = await this.propertyRepository.findAndCount({ where: { organizationId }, select: ['id'] });
+    return {
+      totalProperties: totalCount,
+      ids: properties.map(property => property.id)
+    };
+  }
+
   async findByAmenityId(amenityId: string): Promise<PropertyEntity[]> {
     return this.propertyRepository
       .createQueryBuilder('property')

@@ -198,4 +198,53 @@ export class MaintenanceService {
   async getImages(requestId: string, pagination?: PaginationInput): Promise<Connection<MaintenanceImage>> {
     return this.findImagesByRequestId(requestId, pagination);
   }
+
+  async getKPIsByOrganizationId(organizationId: string) {
+    const currentDate = new Date();
+    const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const currentMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const previousMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const previousMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+
+    const stats = await this.maintenanceRequestRepository
+      .createQueryBuilder('request')
+      .innerJoin('properties', 'property', 'property.id = request.property_id')
+      .select([
+        // Current Month Stats
+        'COUNT(CASE WHEN request.createdAt BETWEEN :currentMonthStart AND :currentMonthEnd THEN 1 END) as "totalCurrentMonthMaintenanceRequests"',
+        'COUNT(CASE WHEN request.createdAt BETWEEN :currentMonthStart AND :currentMonthEnd AND request.status = :completed THEN 1 END) as "totalCurrentMonthMaintenanceRequestsCompleted"',
+        'COUNT(CASE WHEN request.createdAt BETWEEN :currentMonthStart AND :currentMonthEnd AND request.status = :pending THEN 1 END) as "totalCurrentMonthMaintenanceRequestsPending"',
+        'COUNT(CASE WHEN request.createdAt BETWEEN :currentMonthStart AND :currentMonthEnd AND request.status = :inProgress THEN 1 END) as "totalCurrentMonthMaintenanceRequestsInProgress"',
+        
+        // Previous Month Stats
+        'COUNT(CASE WHEN request.createdAt BETWEEN :previousMonthStart AND :previousMonthEnd THEN 1 END) as "totalPreviousMonthMaintenanceRequests"',
+        'COUNT(CASE WHEN request.createdAt BETWEEN :previousMonthStart AND :previousMonthEnd AND request.status = :completed THEN 1 END) as "totalPreviousMonthMaintenanceRequestsCompleted"',
+        'COUNT(CASE WHEN request.createdAt BETWEEN :previousMonthStart AND :previousMonthEnd AND request.status = :pending THEN 1 END) as "totalPreviousMonthMaintenanceRequestsPending"',
+        'COUNT(CASE WHEN request.createdAt BETWEEN :previousMonthStart AND :previousMonthEnd AND request.status = :inProgress THEN 1 END) as "totalPreviousMonthMaintenanceRequestsInProgress"'
+      ])
+      .where('property.organization_id = :organizationId', { organizationId })
+      .setParameters({
+        currentMonthStart,
+        currentMonthEnd,
+        previousMonthStart,
+        previousMonthEnd,
+        completed: MaintenanceRequestStatus.COMPLETED,
+        pending: MaintenanceRequestStatus.PENDING,
+        inProgress: MaintenanceRequestStatus.IN_PROGRESS
+      })
+      .getRawOne();
+
+    // Convert string values to numbers
+    return {
+      totalCurrentMonthMaintenanceRequests: parseInt(stats.totalCurrentMonthMaintenanceRequests) || 0,
+      totalCurrentMonthMaintenanceRequestsCompleted: parseInt(stats.totalCurrentMonthMaintenanceRequestsCompleted) || 0,
+      totalCurrentMonthMaintenanceRequestsPending: parseInt(stats.totalCurrentMonthMaintenanceRequestsPending) || 0,
+      totalCurrentMonthMaintenanceRequestsInProgress: parseInt(stats.totalCurrentMonthMaintenanceRequestsInProgress) || 0,
+      totalPreviousMonthMaintenanceRequests: parseInt(stats.totalPreviousMonthMaintenanceRequests) || 0,
+      totalPreviousMonthMaintenanceRequestsCompleted: parseInt(stats.totalPreviousMonthMaintenanceRequestsCompleted) || 0,
+      totalPreviousMonthMaintenanceRequestsPending: parseInt(stats.totalPreviousMonthMaintenanceRequestsPending) || 0,
+      totalPreviousMonthMaintenanceRequestsInProgress: parseInt(stats.totalPreviousMonthMaintenanceRequestsInProgress) || 0
+    };
+  }
+  
 }

@@ -96,6 +96,7 @@ export class NearbyPlaceService {
     last?: number
   ): Promise<NearbyPlaceConnection | null> {
     const qb = this.placeRepository.createQueryBuilder('place')
+      .leftJoinAndSelect('place.location', 'location')
       .where('place.property_id = :propertyId', { propertyId })
       .orderBy('place.distance', 'ASC');
 
@@ -130,7 +131,16 @@ export class NearbyPlaceService {
 
     const edges: NearbyPlaceEdge[] = orderedPlaces.map(place => ({
       cursor: toCursor(place.id),
-      node: place,
+      node: {
+        ...place,
+        location: {
+          ...place.location,
+          coordinates: {
+            latitude: place.location.latitude,
+            longitude: place.location.longitude
+          }
+        }
+      },
     }));
 
     return {

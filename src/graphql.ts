@@ -601,6 +601,8 @@ export abstract class IQuery {
 
     abstract myOrganizations(): Organization[] | Promise<Organization[]>;
 
+    abstract organizationKPIs(organizationId: string): OrganizationKPI | Promise<OrganizationKPI>;
+
     abstract image(id: string): Nullable<Image> | Promise<Nullable<Image>>;
 
     abstract images(pagination?: Nullable<PaginationInput>): ImageConnection | Promise<ImageConnection>;
@@ -839,6 +841,7 @@ export class NearbyPlace {
     name: string;
     type: string;
     distance: number;
+    location: Location;
     createdAt: DateTime;
     updatedAt: DateTime;
 }
@@ -1010,6 +1013,52 @@ export class PriceRule {
     description?: Nullable<string>;
 }
 
+export class MaintenanceRequestKPI {
+    __typename?: 'MaintenanceRequestKPI';
+    totalCurrentMonthMaintenanceRequests: number;
+    totalCurrentMonthMaintenanceRequestsCompleted: number;
+    totalCurrentMonthMaintenanceRequestsInProgress: number;
+    totalCurrentMonthMaintenanceRequestsPending: number;
+    totalPreviousMonthMaintenanceRequests: number;
+    totalPreviousMonthMaintenanceRequestsCompleted: number;
+    totalPreviousMonthMaintenanceRequestsInProgress: number;
+    totalPreviousMonthMaintenanceRequestsPending: number;
+}
+
+export class RevenueKPI {
+    __typename?: 'RevenueKPI';
+    currentMonthRevenue: number;
+    lastMonthRevenue: number;
+    yearToDateRevenue: number;
+}
+
+export class BookingKPI {
+    __typename?: 'BookingKPI';
+    totalCurrentMonthConfirmedBookings: number;
+    totalCurrentMonthCancelledBookings: number;
+    totalCurrentMonthPendingBookings: number;
+    totalCurrentMonthRejectedBookings: number;
+    totalPreviousMonthConfirmedBookings: number;
+    totalPreviousMonthCancelledBookings: number;
+    totalPreviousMonthRejectedBookings: number;
+    totalLifetimeConfirmedBookings: number;
+    totalLifetimeCancelledBookings: number;
+    totalLifetimeRejectedBookings: number;
+}
+
+export class PropertyKPI {
+    __typename?: 'PropertyKPI';
+    totalProperties: number;
+}
+
+export class OrganizationKPI {
+    __typename?: 'OrganizationKPI';
+    propertyKpis: PropertyKPI;
+    bookingKpis: BookingKPI;
+    maintenanceKpis: MaintenanceRequestKPI;
+    revenueKpis: RevenueKPI;
+}
+
 export class Organization {
     __typename?: 'Organization';
     id: string;
@@ -1018,6 +1067,7 @@ export class Organization {
     primaryUser?: Nullable<OrganizationMember>;
     members: OrganizationMember[];
     properties: PropertyConnection;
+    kpis?: Nullable<OrganizationKPI>;
     createdAt: DateTime;
 }
 
