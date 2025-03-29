@@ -318,6 +318,15 @@ export class LocationSuggestionsInput {
     query: string;
 }
 
+export class PropertyDescriptionInput {
+    type: string;
+    bedrooms: number;
+    bathrooms: number;
+    amenities: string[];
+    location: string;
+    nearbyPlaces?: Nullable<string[]>;
+}
+
 export class CreateMaintenanceRequestInput {
     propertyId: string;
     urgency: MaintenanceRequestUrgency;
@@ -572,6 +581,8 @@ export abstract class IMutation {
     abstract markNotificationAsRead(id: string): Notification | Promise<Notification>;
 
     abstract markAllNotificationsAsRead(userId: string): boolean | Promise<boolean>;
+
+    abstract generatePropertyDescription(propertyId: string, details: PropertyDescriptionInput): string | Promise<string>;
 }
 
 export abstract class IQuery {

@@ -288,6 +288,9 @@ type Mutation {
   ## Notification Mutations
   markNotificationAsRead(id: ID!): Notification!
   markAllNotificationsAsRead(userId: ID!): Boolean!
+
+  ## LLM Mutations
+  generatePropertyDescription(propertyId: ID!, details: PropertyDescriptionInput!): String!
 }
 
 # Query Types
@@ -422,6 +425,15 @@ type Bed {
   room: String!
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+input PropertyDescriptionInput {
+  type: String!
+  bedrooms: Int!
+  bathrooms: Int!
+  amenities: [String!]!
+  location: String!
+  nearbyPlaces: [String!]
 }
 
 # Property
