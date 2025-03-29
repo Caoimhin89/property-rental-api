@@ -11,6 +11,11 @@ import {
   OneToOne,
   ManyToMany } from 'typeorm';
 
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -27,6 +32,9 @@ export class User {
 
   @Column({ nullable: true })
   avatar?: string;
+
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
 
   @Column({ name: 'verification_token', nullable: true })
   verificationToken?: string;

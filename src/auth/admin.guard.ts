@@ -7,6 +7,6 @@ export class AdminGuard implements CanActivate {
     const ctx = GqlExecutionContext.create(context);
     const user = ctx.getContext().req.user;
     
-    return user?.role === 'ADMIN';
+    return user?.role === 'ADMIN' || user?.organization?.role === 'OWNER';
   }
 } 
