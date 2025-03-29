@@ -20,6 +20,7 @@ import { KafkaModule } from './kafka/kafka.module';
 import { NotificationModule } from './notification/notification.module';
 import { CacheModule } from './cache/cache.module';
 import { EmailModule } from './email/email.module';
+import { LlmModule } from './llm/llm.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,6 +49,7 @@ import { EmailModule } from './email/email.module';
     NotificationModule,
     CacheModule,
     EmailModule,
+    LlmModule,
   ],
 })
 export class AppModule {}
