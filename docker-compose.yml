@@ -60,6 +60,31 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
 
+  # emailengine:
+  #   image: postalsys/emailengine:latest
+  #   ports:
+  #     - "2525:2525"  # SMTP for message submission
+  #     - "9993:9993"  # IMAP proxy
+  #   depends_on:
+  #     - redis
+  #   environment:
+  #     EENGINE_SETTINGS: >
+  #       {
+  #         "smtpServerEnabled": true,
+  #         "smtpServerPort": 2525,
+  #         "smtpServerHost": "0.0.0.0",
+  #         "smtpServerAuthEnabled": true,
+  #         "smtpServerUser": "smtp",
+  #         "smtpServerPassword": "passw0rd"
+  #       }
+  #     EENGINE_SECRET: 'your-secret-key'
+  #     EENGINE_REDIS: 'redis://redis:6379/2'
+  #   logging:
+  #     driver: 'json-file'
+  #     options:
+  #       max-size: '200m'
+  #       max-file: '5'
+
 volumes:
   postgres_data:
   redis_data:
