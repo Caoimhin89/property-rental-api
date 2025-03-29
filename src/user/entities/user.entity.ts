@@ -1,8 +1,15 @@
 import { MaintenanceRequest } from 'maintenance/entities/maintenance-request.entity';
 import { OrganizationMember } from 'organization/entities/organization-member.entity';
-import { Organization } from 'organization/entities/organization.entity';
 import { Property as PropertyEntity } from 'property/entities/property.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, OneToOne, ManyToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  OneToOne,
+  ManyToMany } from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -20,6 +27,12 @@ export class User {
 
   @Column({ nullable: true })
   avatar?: string;
+
+  @Column({ name: 'verification_token', nullable: true })
+  verificationToken?: string;
+
+  @Column({ name: 'verification_token_expires_at', nullable: true })
+  verificationTokenExpiresAt?: Date;
 
   @ManyToMany(() => PropertyEntity, property => property.favoritedBy)
   favoriteProperties: PropertyEntity[];

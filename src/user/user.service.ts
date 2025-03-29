@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { BookingConnection, CreateUserInput, MaintenanceRequestConnection, OrganizationType, PaginationInput, User as UserType } from '../graphql';
 import { toCursor } from 'common/utils';
-
+import { ClientKafka } from '@nestjs/microservices';
+import { generateVerificationCode } from '@crispengari/random-verification-codes';
 interface UserEntityConnection {
   edges: {
     cursor: string;
@@ -24,11 +25,27 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
   ) {}
 
   async create(input: CreateUserInput): Promise<User> {
-    const user = this.userRepository.create(input);
-    return this.userRepository.save(user);
+    const userInput = {
+      ...input,
+      verificationToken: await generateVerificationCode(5, true, true) as string,
+      verificationTokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+    };
+    const user = this.userRepository.create(userInput);
+    await this.userRepository.save(user);
+
+    // Emit user registered event to Kafka
+    await this.kafkaClient.emit('user.registered', {
+      key: user.id,
+      value: user,
+      headers: {
+        timestamp: new Date().toISOString(),
+      },
+    });
+    return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {

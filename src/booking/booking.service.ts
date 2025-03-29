@@ -1,5 +1,5 @@
 import ShortUniqueId from 'short-unique-id';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from './entities/booking.entity';
@@ -13,11 +13,12 @@ import { buildPaginatedResponse } from '../common/utils';
 import { Connection } from '../common/types/types';
 import { Property } from 'property/entities/property.entity';
 import { BookingStatus } from '../graphql';
-
+import { ClientKafka } from '@nestjs/microservices';
 @Injectable()
 export class BookingService {
   constructor(
     @InjectRepository(Booking)
+    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
     private readonly bookingRepository: Repository<Booking>,
     private readonly propertyService: PropertyService
   ) {}
@@ -328,6 +329,13 @@ export class BookingService {
     });
 
     await this.bookingRepository.save(booking);
+    await this.kafkaClient.emit('booking.created', {
+      key: booking.id,
+      value: booking,
+      headers: {
+        timestamp: new Date().toISOString(),
+      },
+    });
 
     if (!booking) {
       return {
@@ -344,5 +352,22 @@ export class BookingService {
       bookingId: booking.id,
       confirmationCode: booking.confirmationCode
     };
+  }
+
+  async updateBookingStatus(bookingId: string, status: BookingStatus): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({ where: { id: bookingId } });
+    if (!booking) {
+      throw new Error('Booking not found');
+    }
+    booking.status = status;
+    await this.bookingRepository.save(booking);
+    await this.kafkaClient.emit('booking.status.updated', {
+      key: booking.id,
+      value: booking,
+      headers: {
+        timestamp: new Date().toISOString(),
+      },
+    });
+    return booking;
   }
 } 
