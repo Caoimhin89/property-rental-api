@@ -19,6 +19,7 @@ import { SearchModule } from './search/search.module';
 import { KafkaModule } from './kafka/kafka.module';
 import { NotificationModule } from './notification/notification.module';
 import { CacheModule } from './cache/cache.module';
+import { EmailModule } from './email/email.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -46,6 +47,7 @@ import { CacheModule } from './cache/cache.module';
     KafkaModule,
     NotificationModule,
     CacheModule,
+    EmailModule,
   ],
 })
 export class AppModule {}
