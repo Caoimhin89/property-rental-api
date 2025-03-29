@@ -1,11 +1,11 @@
 -- Seed Data
 
 -- Users
-INSERT INTO users (id, name, email, password, avatar, created_at, updated_at) VALUES
-('dce2e155-6e65-4dd1-b3ec-1496021e31fa'::uuid, 'John Doe', 'john@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('04ef4013-4da7-4a73-b024-0548fb5f9511'::uuid, 'Jane Smith', 'jane@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('fe31a737-e863-47a8-a76c-4d4fa01bff40'::uuid, 'Bob Wilson', 'bob@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('08e48e8d-4ec6-42fd-82da-4c10e317b300'::uuid, 'Charlie Brown', 'charlie@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO users (id, name, email, password, avatar, verification_token, verification_token_expires_at, created_at, updated_at) VALUES
+('dce2e155-6e65-4dd1-b3ec-1496021e31fa'::uuid, 'John Doe', 'john@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('04ef4013-4da7-4a73-b024-0548fb5f9511'::uuid, 'Jane Smith', 'jane@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('fe31a737-e863-47a8-a76c-4d4fa01bff40'::uuid, 'Bob Wilson', 'bob@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('08e48e8d-4ec6-42fd-82da-4c10e317b300'::uuid, 'Charlie Brown', 'charlie@example.com', '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Organizations
 INSERT INTO organizations (id, name, organization_type, created_at, updated_at) VALUES
