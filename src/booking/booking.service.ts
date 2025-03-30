@@ -3,7 +3,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from './entities/booking.entity';
-import { BookingConnection, BookingEdge, CreateBookingInput, BookingResponse } from '../graphql';
+import { BookingConnection, CreateBookingInput, BookingResponse } from '../graphql';
 import { Booking as BookingType } from '../graphql';
 import { PropertyService } from '../property/property.service';
 import { LessThanOrEqual, MoreThanOrEqual, Not, In } from 'typeorm';
@@ -12,10 +12,16 @@ import { PaginationInput } from '../graphql';
 import { buildPaginatedResponse } from '../common/utils';
 import { Connection } from '../common/types/types';
 import { Property } from 'property/entities/property.entity';
-import { User as UserEntity } from '../user/entities/user.entity';
+import { User as UserEntity, UserRole } from '../user/entities/user.entity';
 import { BookingStatus } from '../graphql';
 import { ClientKafka } from '@nestjs/microservices';
 import { LoggerService } from '../common/services/logger.service';
+
+type BookingActionConfig = {
+  status: BookingStatus;
+  authorizeUser: (booking: Booking, user: UserEntity) => boolean;
+};
+
 @Injectable()
 export class BookingService {
   constructor(
@@ -365,20 +371,107 @@ export class BookingService {
     };
   }
 
-  async updateBookingStatus(bookingId: string, status: BookingStatus): Promise<Booking> {
-    const booking = await this.bookingRepository.findOne({ where: { id: bookingId } });
+  // Public methods
+  async confirmBooking(bookingId: string, user: UserEntity): Promise<Booking> {
+    return this.changeBookingStatus(bookingId, 'confirm', user);
+  }
+
+  async rejectBooking(bookingId: string, user: UserEntity): Promise<Booking> {
+    return this.changeBookingStatus(bookingId, 'reject', user);
+  }
+
+  async cancelBooking(bookingId: string, user: UserEntity): Promise<Booking> {
+    return this.changeBookingStatus(bookingId, 'cancel', user);
+  }
+
+  // Private methods
+  private readonly bookingActions: Record<string, BookingActionConfig> = {
+    confirm: {
+      status: BookingStatus.CONFIRMED,
+      authorizeUser: (booking, user) => 
+        user.role === UserRole.ADMIN || 
+        booking.property.organizationId === user.organizationMembership?.organizationId
+    },
+    reject: {
+      status: BookingStatus.REJECTED,
+      authorizeUser: (booking, user) => 
+        user.role === UserRole.ADMIN || 
+        booking.property.organizationId === user.organizationMembership?.organizationId
+    },
+    cancel: {
+      status: BookingStatus.CANCELLED,
+      authorizeUser: (booking, user) => 
+        user.role === UserRole.ADMIN || 
+        booking.userId === user.id
+    }
+  };
+
+  private async changeBookingStatus(
+    bookingId: string, 
+    action: 'confirm' | 'reject' | 'cancel',
+    user: UserEntity
+  ): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({ 
+      where: { id: bookingId }, 
+      relations: ['property'] 
+    });
+
     if (!booking) {
       throw new Error('Booking not found');
     }
-    booking.status = status;
-    await this.bookingRepository.save(booking);
-    await this.kafkaClient.emit('booking.status.updated', {
+
+    const actionConfig = this.bookingActions[action];
+    if (!actionConfig.authorizeUser(booking, user)) {
+      throw new Error(`User is not authorized to ${action} this booking`);
+    }
+
+    return this.updateBookingStatus(action, bookingId, actionConfig.status, booking, user);
+  }
+  
+  private async updateBookingStatus(
+    action: 'confirm' | 'reject' | 'cancel',
+    bookingId: string, 
+    status: BookingStatus, 
+    booking: Booking,
+    user: UserEntity
+  ): Promise<Booking> {
+    const bookingToUpdate = booking || await this.findBookingById(bookingId);
+    bookingToUpdate.status = status;
+    
+    const updatedBooking = await this.bookingRepository.save(bookingToUpdate);
+    await this.emitBookingStatusUpdate(action, updatedBooking, user);
+    
+    return updatedBooking;
+  }
+
+  private async emitBookingStatusUpdate(
+    action: 'confirm' | 'reject' | 'cancel',
+    booking: Booking,
+    user: UserEntity): Promise<void> {
+    await this.kafkaClient.emit(`booking.status.${action}`, {
       key: booking.id,
-      value: booking,
+      value: {
+        user: {
+          email: user.email,
+          name: user.name,
+        },
+        bookingDetails: booking
+      },
       headers: {
         timestamp: new Date().toISOString(),
       },
     });
+  }
+
+  private async findBookingById(bookingId: string): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({ 
+      where: { id: bookingId } 
+    });
+    
+    if (!booking) {
+      throw new Error('Booking not found');
+    }
+    
     return booking;
   }
 } 
