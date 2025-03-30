@@ -5,12 +5,14 @@ import { Booking } from './entities/booking.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PropertyModule } from '../property/property.module';
 import { DataLoaderModule } from '../data-loader/data-loader.module';
+import { KafkaModule } from '../kafka/kafka.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Booking]),
     forwardRef(() => PropertyModule),
     forwardRef(() => DataLoaderModule),
+    KafkaModule,
   ],
   providers: [BookingResolver, BookingService],
   exports: [BookingService],

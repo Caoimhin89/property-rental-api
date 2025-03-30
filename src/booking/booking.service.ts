@@ -12,14 +12,16 @@ import { PaginationInput } from '../graphql';
 import { buildPaginatedResponse } from '../common/utils';
 import { Connection } from '../common/types/types';
 import { Property } from 'property/entities/property.entity';
+import { User as UserEntity } from '../user/entities/user.entity';
 import { BookingStatus } from '../graphql';
 import { ClientKafka } from '@nestjs/microservices';
 @Injectable()
 export class BookingService {
   constructor(
     @InjectRepository(Booking)
-    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
     private readonly bookingRepository: Repository<Booking>,
+    @Inject('KAFKA_SERVICE')
+    private readonly kafkaClient: ClientKafka,
     private readonly propertyService: PropertyService
   ) {}
 
@@ -270,7 +272,7 @@ export class BookingService {
     return ((currentRevenue - previousRevenue) / previousRevenue) * 100;
   }
 
-  async createBooking(propertyId: string, input: CreateBookingInput): Promise<BookingResponse> {
+  async createBooking(propertyId: string, input: CreateBookingInput, user: UserEntity): Promise<BookingResponse> {
 
     // Check if property exists
     const property = await this.fetchRequestedProperty(propertyId);
@@ -319,7 +321,7 @@ export class BookingService {
     const uid = new ShortUniqueId({ length: 10 });
     const booking = this.bookingRepository.create({
       property: { id: propertyId! },
-      user: { id: input.userId! },
+      user: { id: user.id! },
       confirmationCode: uid.rnd(),
       numberOfGuests: input.numberOfGuests,
       startDate: input.startDate,
@@ -331,7 +333,10 @@ export class BookingService {
     await this.bookingRepository.save(booking);
     await this.kafkaClient.emit('booking.created', {
       key: booking.id,
-      value: booking,
+      value: {
+        user,
+        bookingDetails: booking
+      },
       headers: {
         timestamp: new Date().toISOString(),
       },

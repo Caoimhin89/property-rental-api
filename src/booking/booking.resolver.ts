@@ -57,12 +57,6 @@ export class BookingResolver {
     @Args('input') input: CreateBookingInput,
     @CurrentUser() user: User
   ): Promise<BookingResponse> {
-    console.log('user', user);
-    console.log('input', input);
-    if (!input.userId) {
-      input.userId = user.id;
-    }
-    console.log('input_after', input);
-    return this.bookingService.createBooking(propertyId, input);
+    return this.bookingService.createBooking(propertyId, input, user);
   }
 } 
