@@ -12,7 +12,7 @@
     "gql:gen": "ts-node generate-typings",
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "postbuild": "copyfiles -u 1 src/email/emailTemplates/*.{html,css} dist",
+    "postbuild": "copyfiles -u 1 src/email/emailTemplates/*.{html,css,svg} dist",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
