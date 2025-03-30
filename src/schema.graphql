@@ -342,6 +342,7 @@ type Property {
     radiusInMi: Float,
     radiusInKm: Float
   ): NearbyPlaceConnection!
+  bookings(status: BookingStatus, pagination: PaginationInput): BookingConnection!
   createdAt: DateTime!
   updatedAt: DateTime!
   # Calculate these based on date range query
