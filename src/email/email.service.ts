@@ -6,6 +6,7 @@ import * as Handlebars from 'handlebars';
 import juice from 'juice';
 import { LoggerService } from '../common/services/logger.service';
 import { User as UserEntity } from '../user/entities/user.entity';
+import { formatDate } from 'common/utils';
 @Injectable()
 export class EmailService implements OnModuleInit {
   private transporter: nodemailer.Transporter;
@@ -159,8 +160,8 @@ export class EmailService implements OnModuleInit {
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
       propertyImage: bookingDetails.property.imageUrl,
-      checkInDate: bookingDetails.startDate,
-      checkOutDate: bookingDetails.endDate,
+      checkInDate: formatDate(bookingDetails.startDate),
+      checkOutDate: formatDate(bookingDetails.endDate),
       numberOfGuests: bookingDetails.numberOfGuests,
       confirmationCode: bookingDetails.confirmationCode,
       totalAmount: bookingDetails.totalPrice,

@@ -1,5 +1,13 @@
 import { Connection } from "./types/types";
 
+export function formatDate(date: Date, locale: string = 'en-US'): string {
+  return date.toLocaleDateString(locale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
 export function toCursor(id: string): string {
   return Buffer.from(id).toString('base64');
 }
