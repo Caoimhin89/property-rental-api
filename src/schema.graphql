@@ -228,132 +228,6 @@ type LocationSuggestion {
   longitude: Float
 }
 
-type Mutation {
-  ## Auth Mutations
-  login(input: LoginInput!): AuthResponse!
-  signup(input: SignupInput!): AuthResponse!
-  refreshToken(token: String!): AuthResponse!
-
-  ## User Mutations
-  createUser(input: CreateUserInput!): User!
-  removeUser(id: ID!): Boolean!
-
-  ## Property Mutations
-  createProperty(input: CreatePropertyInput!): Property!
-  updateProperty(id: ID!, input: UpdatePropertyInput!): PropertyResult!
-  removeProperty(id: ID!): Boolean!
-  blockDates(propertyId: ID!, input: CreateBlockedDateInput!): BlockedDate!
-  setPriceRule(propertyId: ID!, input: CreatePriceRuleInput!): PriceRule!
-  addToFavorites(propertyId: ID!): Property!
-  removeFromFavorites(propertyId: ID!): Property!
-
-  ## Location Mutations
-  createLocation(input: CreateLocationInput!): Location!
-  removeLocation(id: ID!): Boolean!
-
-  ## Nearby Place Mutations
-  createNearbyPlace(input: CreateNearbyPlaceInput!): NearbyPlace!
-  removeNearbyPlace(id: ID!): Boolean!
-
-  ## Amenity Mutations
-  createAmenity(input: CreateAmenityInput!): Amenity!
-  removeAmenity(id: ID!): Boolean!
-  updateAmenity(id: ID!, input: UpdateAmenityInput!): Amenity!
-  addAmenityToProperty(propertyId: ID!, amenityId: ID!): Property!
-  removeAmenityFromProperty(propertyId: ID!, amenityId: ID!): Property!
-
-  ## Image Mutations
-  createImage(input: CreateImageInput!): Image!
-  removeImage(id: ID!): Boolean!
-
-  ## Review Mutations
-  addReview(propertyId: ID!, input: CreateReviewInput!): Review!
-
-  ## Booking Mutations
-  createBooking(propertyId: ID!, input: CreateBookingInput!): BookingResponse!
-
-  ## Organization Mutations
-  createOrganization(input: CreateOrganizationInput!): Organization!
-  updateOrganization(id: ID!, input: UpdateOrganizationInput!): Organization!
-  addOrganizationMember(organizationId: ID!, userId: ID!, role: OrganizationRole!): OrganizationMember!
-  removeOrganizationMember(organizationId: ID!, userId: ID!): Boolean!
-  updateOrganizationMemberRole(organizationId: ID!, userId: ID!, role: OrganizationRole!): OrganizationMember!
-
-  ## Maintenance Request Mutations
-  createMaintenanceRequest(input: CreateMaintenanceRequestInput!): MaintenanceRequest!
-  updateMaintenanceRequest(id: ID!, input: UpdateMaintenanceRequestInput!): MaintenanceRequest!
-  addMaintenanceComment(input: CreateMaintenanceCommentInput!): MaintenanceComment!
-  addMaintenanceImage(input: CreateMaintenanceImageInput!): MaintenanceImage!
-
-  ## Notification Mutations
-  markNotificationAsRead(id: ID!): Notification!
-  markAllNotificationsAsRead(userId: ID!): Boolean!
-
-  ## LLM Mutations
-  generatePropertyDescription(propertyId: ID!, details: PropertyDescriptionInput!): String!
-}
-
-# Query Types
-type Query {
-  propertyById(id: ID!): Property
-  properties(
-    filter: PropertyFilter,
-    pagination: PaginationInput
-  ): PropertyConnection
-  propertyAmenities(propertyId: ID!): [Amenity!]!
-  propertyImages(propertyId: ID!): ImageConnection!
-  propertyLocation(propertyId: ID!): Location
-  propertyReviews(
-    propertyId: ID!,
-    pagination: PaginationInput
-  ): ReviewConnection
-  booking(id: ID!): Booking
-  bookings(
-    pagination: PaginationInput
-  ): BookingConnection!
-  bookingsByUser(
-    userId: ID!,
-    pagination: PaginationInput
-  ): BookingConnection!
-  organization(id: ID!): Organization!
-  organizations(
-    filter: OrganizationFilter,
-    pagination: PaginationInput
-  ): OrganizationConnection!
-  myOrganizations: [Organization!]!
-  organizationKPIs(organizationId: ID!): OrganizationKPI!
-  image(id: ID!): Image
-  images(
-    pagination: PaginationInput
-  ): ImageConnection!
-  amenity(id: ID!): Amenity
-  amenities(pagination: PaginationInput): AmenityConnection!
-  user(id: ID!): User
-  users(pagination: PaginationInput): UserConnection!
-  maintenanceRequest(id: ID!): MaintenanceRequest
-  maintenanceRequests(
-    propertyId: ID
-    status: MaintenanceRequestStatus
-    pagination: PaginationInput
-  ): MaintenanceRequestConnection!
-  search(
-    term: String!, 
-    pagination: PaginationInput,
-    filters: SearchFilter
-  ): SearchResultConnection!
-  notification(id: ID!): Notification
-  notifications(
-    userId: ID!,
-    filter: NotificationFilter,
-    pagination: PaginationInput): NotificationConnection!
-  geocode(input: GeocodeInput!): GeocodeResponse!
-  locationSuggestions(input: LocationSuggestionsInput!): [LocationSuggestion]!
-  favorites(
-    userId: ID!,
-    pagination: PaginationInput
-  ): FavoritesConnection!
-}
-
 # Scalar Types
 scalar DateTime
 scalar Money
@@ -1125,4 +999,133 @@ input SearchFilter {
   
   # Minimum similarity score (0-1)
   minSimilarity: Float
+}
+
+type Mutation {
+  ## Auth Mutations
+  login(input: LoginInput!): AuthResponse!
+  signup(input: SignupInput!): AuthResponse!
+  refreshToken(token: String!): AuthResponse!
+
+  ## User Mutations
+  createUser(input: CreateUserInput!): User!
+  removeUser(id: ID!): Boolean!
+
+  ## Property Mutations
+  createProperty(input: CreatePropertyInput!): Property!
+  updateProperty(id: ID!, input: UpdatePropertyInput!): PropertyResult!
+  removeProperty(id: ID!): Boolean!
+  blockDates(propertyId: ID!, input: CreateBlockedDateInput!): BlockedDate!
+  setPriceRule(propertyId: ID!, input: CreatePriceRuleInput!): PriceRule!
+  addToFavorites(propertyId: ID!): Property!
+  removeFromFavorites(propertyId: ID!): Property!
+
+  ## Location Mutations
+  createLocation(input: CreateLocationInput!): Location!
+  removeLocation(id: ID!): Boolean!
+
+  ## Nearby Place Mutations
+  createNearbyPlace(input: CreateNearbyPlaceInput!): NearbyPlace!
+  removeNearbyPlace(id: ID!): Boolean!
+
+  ## Amenity Mutations
+  createAmenity(input: CreateAmenityInput!): Amenity!
+  removeAmenity(id: ID!): Boolean!
+  updateAmenity(id: ID!, input: UpdateAmenityInput!): Amenity!
+  addAmenityToProperty(propertyId: ID!, amenityId: ID!): Property!
+  removeAmenityFromProperty(propertyId: ID!, amenityId: ID!): Property!
+
+  ## Image Mutations
+  createImage(input: CreateImageInput!): Image!
+  removeImage(id: ID!): Boolean!
+
+  ## Review Mutations
+  addReview(propertyId: ID!, input: CreateReviewInput!): Review!
+
+  ## Booking Mutations
+  createBooking(propertyId: ID!, input: CreateBookingInput!): BookingResponse!
+  confirmBooking(bookingId: ID!): Booking!
+  rejectBooking(bookingId: ID!): Booking!
+  cancelBooking(bookingId: ID!): Booking!
+
+  ## Organization Mutations
+  createOrganization(input: CreateOrganizationInput!): Organization!
+  updateOrganization(id: ID!, input: UpdateOrganizationInput!): Organization!
+  addOrganizationMember(organizationId: ID!, userId: ID!, role: OrganizationRole!): OrganizationMember!
+  removeOrganizationMember(organizationId: ID!, userId: ID!): Boolean!
+  updateOrganizationMemberRole(organizationId: ID!, userId: ID!, role: OrganizationRole!): OrganizationMember!
+
+  ## Maintenance Request Mutations
+  createMaintenanceRequest(input: CreateMaintenanceRequestInput!): MaintenanceRequest!
+  updateMaintenanceRequest(id: ID!, input: UpdateMaintenanceRequestInput!): MaintenanceRequest!
+  addMaintenanceComment(input: CreateMaintenanceCommentInput!): MaintenanceComment!
+  addMaintenanceImage(input: CreateMaintenanceImageInput!): MaintenanceImage!
+
+  ## Notification Mutations
+  markNotificationAsRead(id: ID!): Notification!
+  markAllNotificationsAsRead(userId: ID!): Boolean!
+
+  ## LLM Mutations
+  generatePropertyDescription(propertyId: ID!, details: PropertyDescriptionInput!): String!
+}
+
+# Query Types
+type Query {
+  propertyById(id: ID!): Property
+  properties(
+    filter: PropertyFilter,
+    pagination: PaginationInput
+  ): PropertyConnection
+  propertyAmenities(propertyId: ID!): [Amenity!]!
+  propertyImages(propertyId: ID!): ImageConnection!
+  propertyLocation(propertyId: ID!): Location
+  propertyReviews(
+    propertyId: ID!,
+    pagination: PaginationInput
+  ): ReviewConnection
+  booking(id: ID!): Booking
+  bookings(
+    pagination: PaginationInput
+  ): BookingConnection!
+  bookingsByUser(
+    userId: ID!,
+    pagination: PaginationInput
+  ): BookingConnection!
+  organization(id: ID!): Organization!
+  organizations(
+    filter: OrganizationFilter,
+    pagination: PaginationInput
+  ): OrganizationConnection!
+  myOrganizations: [Organization!]!
+  organizationKPIs(organizationId: ID!): OrganizationKPI!
+  image(id: ID!): Image
+  images(
+    pagination: PaginationInput
+  ): ImageConnection!
+  amenity(id: ID!): Amenity
+  amenities(pagination: PaginationInput): AmenityConnection!
+  user(id: ID!): User
+  users(pagination: PaginationInput): UserConnection!
+  maintenanceRequest(id: ID!): MaintenanceRequest
+  maintenanceRequests(
+    propertyId: ID
+    status: MaintenanceRequestStatus
+    pagination: PaginationInput
+  ): MaintenanceRequestConnection!
+  search(
+    term: String!, 
+    pagination: PaginationInput,
+    filters: SearchFilter
+  ): SearchResultConnection!
+  notification(id: ID!): Notification
+  notifications(
+    userId: ID!,
+    filter: NotificationFilter,
+    pagination: PaginationInput): NotificationConnection!
+  geocode(input: GeocodeInput!): GeocodeResponse!
+  locationSuggestions(input: LocationSuggestionsInput!): [LocationSuggestion]!
+  favorites(
+    userId: ID!,
+    pagination: PaginationInput
+  ): FavoritesConnection!
 }

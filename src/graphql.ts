@@ -507,142 +507,6 @@ export class LocationSuggestion {
     longitude?: Nullable<number>;
 }
 
-export abstract class IMutation {
-    __typename?: 'IMutation';
-
-    abstract login(input: LoginInput): AuthResponse | Promise<AuthResponse>;
-
-    abstract signup(input: SignupInput): AuthResponse | Promise<AuthResponse>;
-
-    abstract refreshToken(token: string): AuthResponse | Promise<AuthResponse>;
-
-    abstract createUser(input: CreateUserInput): User | Promise<User>;
-
-    abstract removeUser(id: string): boolean | Promise<boolean>;
-
-    abstract createProperty(input: CreatePropertyInput): Property | Promise<Property>;
-
-    abstract updateProperty(id: string, input: UpdatePropertyInput): PropertyResult | Promise<PropertyResult>;
-
-    abstract removeProperty(id: string): boolean | Promise<boolean>;
-
-    abstract blockDates(propertyId: string, input: CreateBlockedDateInput): BlockedDate | Promise<BlockedDate>;
-
-    abstract setPriceRule(propertyId: string, input: CreatePriceRuleInput): PriceRule | Promise<PriceRule>;
-
-    abstract addToFavorites(propertyId: string): Property | Promise<Property>;
-
-    abstract removeFromFavorites(propertyId: string): Property | Promise<Property>;
-
-    abstract createLocation(input: CreateLocationInput): Location | Promise<Location>;
-
-    abstract removeLocation(id: string): boolean | Promise<boolean>;
-
-    abstract createNearbyPlace(input: CreateNearbyPlaceInput): NearbyPlace | Promise<NearbyPlace>;
-
-    abstract removeNearbyPlace(id: string): boolean | Promise<boolean>;
-
-    abstract createAmenity(input: CreateAmenityInput): Amenity | Promise<Amenity>;
-
-    abstract removeAmenity(id: string): boolean | Promise<boolean>;
-
-    abstract updateAmenity(id: string, input: UpdateAmenityInput): Amenity | Promise<Amenity>;
-
-    abstract addAmenityToProperty(propertyId: string, amenityId: string): Property | Promise<Property>;
-
-    abstract removeAmenityFromProperty(propertyId: string, amenityId: string): Property | Promise<Property>;
-
-    abstract createImage(input: CreateImageInput): Image | Promise<Image>;
-
-    abstract removeImage(id: string): boolean | Promise<boolean>;
-
-    abstract addReview(propertyId: string, input: CreateReviewInput): Review | Promise<Review>;
-
-    abstract createBooking(propertyId: string, input: CreateBookingInput): BookingResponse | Promise<BookingResponse>;
-
-    abstract createOrganization(input: CreateOrganizationInput): Organization | Promise<Organization>;
-
-    abstract updateOrganization(id: string, input: UpdateOrganizationInput): Organization | Promise<Organization>;
-
-    abstract addOrganizationMember(organizationId: string, userId: string, role: OrganizationRole): OrganizationMember | Promise<OrganizationMember>;
-
-    abstract removeOrganizationMember(organizationId: string, userId: string): boolean | Promise<boolean>;
-
-    abstract updateOrganizationMemberRole(organizationId: string, userId: string, role: OrganizationRole): OrganizationMember | Promise<OrganizationMember>;
-
-    abstract createMaintenanceRequest(input: CreateMaintenanceRequestInput): MaintenanceRequest | Promise<MaintenanceRequest>;
-
-    abstract updateMaintenanceRequest(id: string, input: UpdateMaintenanceRequestInput): MaintenanceRequest | Promise<MaintenanceRequest>;
-
-    abstract addMaintenanceComment(input: CreateMaintenanceCommentInput): MaintenanceComment | Promise<MaintenanceComment>;
-
-    abstract addMaintenanceImage(input: CreateMaintenanceImageInput): MaintenanceImage | Promise<MaintenanceImage>;
-
-    abstract markNotificationAsRead(id: string): Notification | Promise<Notification>;
-
-    abstract markAllNotificationsAsRead(userId: string): boolean | Promise<boolean>;
-
-    abstract generatePropertyDescription(propertyId: string, details: PropertyDescriptionInput): string | Promise<string>;
-}
-
-export abstract class IQuery {
-    __typename?: 'IQuery';
-
-    abstract propertyById(id: string): Nullable<Property> | Promise<Nullable<Property>>;
-
-    abstract properties(filter?: Nullable<PropertyFilter>, pagination?: Nullable<PaginationInput>): Nullable<PropertyConnection> | Promise<Nullable<PropertyConnection>>;
-
-    abstract propertyAmenities(propertyId: string): Amenity[] | Promise<Amenity[]>;
-
-    abstract propertyImages(propertyId: string): ImageConnection | Promise<ImageConnection>;
-
-    abstract propertyLocation(propertyId: string): Nullable<Location> | Promise<Nullable<Location>>;
-
-    abstract propertyReviews(propertyId: string, pagination?: Nullable<PaginationInput>): Nullable<ReviewConnection> | Promise<Nullable<ReviewConnection>>;
-
-    abstract booking(id: string): Nullable<Booking> | Promise<Nullable<Booking>>;
-
-    abstract bookings(pagination?: Nullable<PaginationInput>): BookingConnection | Promise<BookingConnection>;
-
-    abstract bookingsByUser(userId: string, pagination?: Nullable<PaginationInput>): BookingConnection | Promise<BookingConnection>;
-
-    abstract organization(id: string): Organization | Promise<Organization>;
-
-    abstract organizations(filter?: Nullable<OrganizationFilter>, pagination?: Nullable<PaginationInput>): OrganizationConnection | Promise<OrganizationConnection>;
-
-    abstract myOrganizations(): Organization[] | Promise<Organization[]>;
-
-    abstract organizationKPIs(organizationId: string): OrganizationKPI | Promise<OrganizationKPI>;
-
-    abstract image(id: string): Nullable<Image> | Promise<Nullable<Image>>;
-
-    abstract images(pagination?: Nullable<PaginationInput>): ImageConnection | Promise<ImageConnection>;
-
-    abstract amenity(id: string): Nullable<Amenity> | Promise<Nullable<Amenity>>;
-
-    abstract amenities(pagination?: Nullable<PaginationInput>): AmenityConnection | Promise<AmenityConnection>;
-
-    abstract user(id: string): Nullable<User> | Promise<Nullable<User>>;
-
-    abstract users(pagination?: Nullable<PaginationInput>): UserConnection | Promise<UserConnection>;
-
-    abstract maintenanceRequest(id: string): Nullable<MaintenanceRequest> | Promise<Nullable<MaintenanceRequest>>;
-
-    abstract maintenanceRequests(propertyId?: Nullable<string>, status?: Nullable<MaintenanceRequestStatus>, pagination?: Nullable<PaginationInput>): MaintenanceRequestConnection | Promise<MaintenanceRequestConnection>;
-
-    abstract search(term: string, pagination?: Nullable<PaginationInput>, filters?: Nullable<SearchFilter>): SearchResultConnection | Promise<SearchResultConnection>;
-
-    abstract notification(id: string): Nullable<Notification> | Promise<Nullable<Notification>>;
-
-    abstract notifications(userId: string, filter?: Nullable<NotificationFilter>, pagination?: Nullable<PaginationInput>): NotificationConnection | Promise<NotificationConnection>;
-
-    abstract geocode(input: GeocodeInput): GeocodeResponse | Promise<GeocodeResponse>;
-
-    abstract locationSuggestions(input: LocationSuggestionsInput): Nullable<LocationSuggestion>[] | Promise<Nullable<LocationSuggestion>[]>;
-
-    abstract favorites(userId: string, pagination?: Nullable<PaginationInput>): FavoritesConnection | Promise<FavoritesConnection>;
-}
-
 export class Bed {
     __typename?: 'Bed';
     id: string;
@@ -1135,6 +999,148 @@ export class SearchResultConnection {
     edges: SearchResultEdge[];
     pageInfo: PageInfo;
     totalCount: number;
+}
+
+export abstract class IMutation {
+    __typename?: 'IMutation';
+
+    abstract login(input: LoginInput): AuthResponse | Promise<AuthResponse>;
+
+    abstract signup(input: SignupInput): AuthResponse | Promise<AuthResponse>;
+
+    abstract refreshToken(token: string): AuthResponse | Promise<AuthResponse>;
+
+    abstract createUser(input: CreateUserInput): User | Promise<User>;
+
+    abstract removeUser(id: string): boolean | Promise<boolean>;
+
+    abstract createProperty(input: CreatePropertyInput): Property | Promise<Property>;
+
+    abstract updateProperty(id: string, input: UpdatePropertyInput): PropertyResult | Promise<PropertyResult>;
+
+    abstract removeProperty(id: string): boolean | Promise<boolean>;
+
+    abstract blockDates(propertyId: string, input: CreateBlockedDateInput): BlockedDate | Promise<BlockedDate>;
+
+    abstract setPriceRule(propertyId: string, input: CreatePriceRuleInput): PriceRule | Promise<PriceRule>;
+
+    abstract addToFavorites(propertyId: string): Property | Promise<Property>;
+
+    abstract removeFromFavorites(propertyId: string): Property | Promise<Property>;
+
+    abstract createLocation(input: CreateLocationInput): Location | Promise<Location>;
+
+    abstract removeLocation(id: string): boolean | Promise<boolean>;
+
+    abstract createNearbyPlace(input: CreateNearbyPlaceInput): NearbyPlace | Promise<NearbyPlace>;
+
+    abstract removeNearbyPlace(id: string): boolean | Promise<boolean>;
+
+    abstract createAmenity(input: CreateAmenityInput): Amenity | Promise<Amenity>;
+
+    abstract removeAmenity(id: string): boolean | Promise<boolean>;
+
+    abstract updateAmenity(id: string, input: UpdateAmenityInput): Amenity | Promise<Amenity>;
+
+    abstract addAmenityToProperty(propertyId: string, amenityId: string): Property | Promise<Property>;
+
+    abstract removeAmenityFromProperty(propertyId: string, amenityId: string): Property | Promise<Property>;
+
+    abstract createImage(input: CreateImageInput): Image | Promise<Image>;
+
+    abstract removeImage(id: string): boolean | Promise<boolean>;
+
+    abstract addReview(propertyId: string, input: CreateReviewInput): Review | Promise<Review>;
+
+    abstract createBooking(propertyId: string, input: CreateBookingInput): BookingResponse | Promise<BookingResponse>;
+
+    abstract confirmBooking(bookingId: string): Booking | Promise<Booking>;
+
+    abstract rejectBooking(bookingId: string): Booking | Promise<Booking>;
+
+    abstract cancelBooking(bookingId: string): Booking | Promise<Booking>;
+
+    abstract createOrganization(input: CreateOrganizationInput): Organization | Promise<Organization>;
+
+    abstract updateOrganization(id: string, input: UpdateOrganizationInput): Organization | Promise<Organization>;
+
+    abstract addOrganizationMember(organizationId: string, userId: string, role: OrganizationRole): OrganizationMember | Promise<OrganizationMember>;
+
+    abstract removeOrganizationMember(organizationId: string, userId: string): boolean | Promise<boolean>;
+
+    abstract updateOrganizationMemberRole(organizationId: string, userId: string, role: OrganizationRole): OrganizationMember | Promise<OrganizationMember>;
+
+    abstract createMaintenanceRequest(input: CreateMaintenanceRequestInput): MaintenanceRequest | Promise<MaintenanceRequest>;
+
+    abstract updateMaintenanceRequest(id: string, input: UpdateMaintenanceRequestInput): MaintenanceRequest | Promise<MaintenanceRequest>;
+
+    abstract addMaintenanceComment(input: CreateMaintenanceCommentInput): MaintenanceComment | Promise<MaintenanceComment>;
+
+    abstract addMaintenanceImage(input: CreateMaintenanceImageInput): MaintenanceImage | Promise<MaintenanceImage>;
+
+    abstract markNotificationAsRead(id: string): Notification | Promise<Notification>;
+
+    abstract markAllNotificationsAsRead(userId: string): boolean | Promise<boolean>;
+
+    abstract generatePropertyDescription(propertyId: string, details: PropertyDescriptionInput): string | Promise<string>;
+}
+
+export abstract class IQuery {
+    __typename?: 'IQuery';
+
+    abstract propertyById(id: string): Nullable<Property> | Promise<Nullable<Property>>;
+
+    abstract properties(filter?: Nullable<PropertyFilter>, pagination?: Nullable<PaginationInput>): Nullable<PropertyConnection> | Promise<Nullable<PropertyConnection>>;
+
+    abstract propertyAmenities(propertyId: string): Amenity[] | Promise<Amenity[]>;
+
+    abstract propertyImages(propertyId: string): ImageConnection | Promise<ImageConnection>;
+
+    abstract propertyLocation(propertyId: string): Nullable<Location> | Promise<Nullable<Location>>;
+
+    abstract propertyReviews(propertyId: string, pagination?: Nullable<PaginationInput>): Nullable<ReviewConnection> | Promise<Nullable<ReviewConnection>>;
+
+    abstract booking(id: string): Nullable<Booking> | Promise<Nullable<Booking>>;
+
+    abstract bookings(pagination?: Nullable<PaginationInput>): BookingConnection | Promise<BookingConnection>;
+
+    abstract bookingsByUser(userId: string, pagination?: Nullable<PaginationInput>): BookingConnection | Promise<BookingConnection>;
+
+    abstract organization(id: string): Organization | Promise<Organization>;
+
+    abstract organizations(filter?: Nullable<OrganizationFilter>, pagination?: Nullable<PaginationInput>): OrganizationConnection | Promise<OrganizationConnection>;
+
+    abstract myOrganizations(): Organization[] | Promise<Organization[]>;
+
+    abstract organizationKPIs(organizationId: string): OrganizationKPI | Promise<OrganizationKPI>;
+
+    abstract image(id: string): Nullable<Image> | Promise<Nullable<Image>>;
+
+    abstract images(pagination?: Nullable<PaginationInput>): ImageConnection | Promise<ImageConnection>;
+
+    abstract amenity(id: string): Nullable<Amenity> | Promise<Nullable<Amenity>>;
+
+    abstract amenities(pagination?: Nullable<PaginationInput>): AmenityConnection | Promise<AmenityConnection>;
+
+    abstract user(id: string): Nullable<User> | Promise<Nullable<User>>;
+
+    abstract users(pagination?: Nullable<PaginationInput>): UserConnection | Promise<UserConnection>;
+
+    abstract maintenanceRequest(id: string): Nullable<MaintenanceRequest> | Promise<Nullable<MaintenanceRequest>>;
+
+    abstract maintenanceRequests(propertyId?: Nullable<string>, status?: Nullable<MaintenanceRequestStatus>, pagination?: Nullable<PaginationInput>): MaintenanceRequestConnection | Promise<MaintenanceRequestConnection>;
+
+    abstract search(term: string, pagination?: Nullable<PaginationInput>, filters?: Nullable<SearchFilter>): SearchResultConnection | Promise<SearchResultConnection>;
+
+    abstract notification(id: string): Nullable<Notification> | Promise<Nullable<Notification>>;
+
+    abstract notifications(userId: string, filter?: Nullable<NotificationFilter>, pagination?: Nullable<PaginationInput>): NotificationConnection | Promise<NotificationConnection>;
+
+    abstract geocode(input: GeocodeInput): GeocodeResponse | Promise<GeocodeResponse>;
+
+    abstract locationSuggestions(input: LocationSuggestionsInput): Nullable<LocationSuggestion>[] | Promise<Nullable<LocationSuggestion>[]>;
+
+    abstract favorites(userId: string, pagination?: Nullable<PaginationInput>): FavoritesConnection | Promise<FavoritesConnection>;
 }
 
 export type DateTime = any;
