@@ -6,7 +6,11 @@ export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const ctx = GqlExecutionContext.create(context);
     const user = ctx.getContext().req.user;
+
+    console.log('user', user);
     
-    return user?.role === 'ADMIN' || user?.organization?.role === 'OWNER';
+    return (user?.role === 'ADMIN'
+      || (user?.organizationMembership?.role === 'OWNER'
+        || user?.organizationMembership?.role === 'MEMBER'));
   }
 } 
