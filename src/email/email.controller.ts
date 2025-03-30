@@ -27,21 +27,21 @@ export class EmailController {
     await this.emailService.sendBookingPendingConfirmation(data.user, data.bookingDetails, data.property);
   }
 
-  @EventPattern('booking.confirmed')
-  async handleBookingConfirmed(@Payload() data: { email: string; bookingDetails: any }) {
+  @EventPattern('booking.confirm')
+  async handleBookingConfirmed(@Payload() data: { user: {email: string, name: string}; bookingDetails: any }) {
     this.logger.debug('Received booking confirmation event', 'EmailController', data);
-    await this.emailService.sendBookingConfirmation(data.email, data.bookingDetails);
+    await this.emailService.sendBookingConfirmation(data.user, data.bookingDetails);
   }
 
-  @EventPattern('booking.rejected')
-  async handleBookingRejected(@Payload() data: { email: string; bookingDetails: any }) {
+  @EventPattern('booking.reject')
+  async handleBookingRejected(@Payload() data: { user: {email: string, name: string}; bookingDetails: any }) {
     this.logger.debug('Received booking rejection event', 'EmailController', data);
-    await this.emailService.sendBookingRejected(data.email, data.bookingDetails);
+    await this.emailService.sendBookingRejected(data.user, data.bookingDetails);
   }
 
-  @EventPattern('booking.cancelled')
-  async handleBookingCancelled(@Payload() data: { email: string; bookingDetails: any }) {
+  @EventPattern('booking.cancel')
+  async handleBookingCancelled(@Payload() data: { user: {email: string, name: string}; bookingDetails: any }) {
     this.logger.debug('Received booking cancellation event', 'EmailController', data);
-    await this.emailService.sendBookingCancelled(data.email, data.bookingDetails);
+    await this.emailService.sendBookingCancelled(data.user, data.bookingDetails);
   }
 } 
