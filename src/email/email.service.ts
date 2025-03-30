@@ -177,8 +177,8 @@ export class EmailService implements OnModuleInit {
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
       propertyImage: property.images?.[0]?.url,
-      checkInDate: formatDate(bookingDetails.startDate),
-      checkOutDate: formatDate(bookingDetails.endDate),
+      checkInDate: formatDate(bookingDetails.startDate, this.locale),
+      checkOutDate: formatDate(bookingDetails.endDate, this.locale),
       numberOfGuests: bookingDetails.numberOfGuests,
       confirmationCode: bookingDetails.confirmationCode,
       totalAmount: formatCurrency(bookingDetails.totalPrice, this.locale),
@@ -187,27 +187,27 @@ export class EmailService implements OnModuleInit {
     await this.sendEmail(user.email, 'Booking Received - Pending Confirmation', html);
   }
 
-  async sendBookingConfirmation(email: string, bookingDetails: any): Promise<void> {
+  async sendBookingConfirmation(user: {email: string, name: string}, bookingDetails: any): Promise<void> {
     const html = await this.renderTemplate('bookingConfirmed', {
-      recipientEmail: email,
-      guestName: bookingDetails.user.name,
+      recipientEmail: user.email,
+      guestName: user.name,
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
       propertyImage: bookingDetails.property.imageUrl,
-      checkInDate: bookingDetails.startDate,
-      checkOutDate: bookingDetails.endDate,
+      checkInDate: formatDate(bookingDetails.startDate, this.locale),
+      checkOutDate: formatDate(bookingDetails.endDate, this.locale),
       numberOfGuests: bookingDetails.numberOfGuests,
       confirmationCode: bookingDetails.confirmationCode,
-      totalAmount: bookingDetails.totalPrice,
-      bookingUrl: `${process.env.SITE_URL}/bookings/${bookingDetails.id}`,
+      totalAmount: formatCurrency(bookingDetails.totalPrice, this.locale),
+      bookingUrl: `${process.env.SITE_URL}/booking/${bookingDetails.id}`,
     });
-    await this.sendEmail(email, 'Booking Confirmed!', html);
+    await this.sendEmail(user.email, 'Booking Confirmed!', html);
   }
 
-  async sendBookingRejected(email: string, bookingDetails: any): Promise<void> {
+  async sendBookingRejected(user: {email: string, name: string}, bookingDetails: any): Promise<void> {
     const html = await this.renderTemplate('bookingRejected', {
-      recipientEmail: email,
-      guestName: bookingDetails.user.name,
+      recipientEmail: user.email,
+      guestName: user.name,
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
       propertyImage: bookingDetails.property.imageUrl,
@@ -217,15 +217,15 @@ export class EmailService implements OnModuleInit {
       confirmationCode: bookingDetails.confirmationCode,
       rejectionReason: bookingDetails.rejectionReason,
       alternativeProperties: bookingDetails.alternativeProperties || [],
-      searchUrl: `${process.env.SITE_URL}/search`,
+      searchUrl: `${process.env.SITE_URL}`,
     });
-    await this.sendEmail(email, 'Booking Request Not Approved', html);
+    await this.sendEmail(user.email, 'Booking Request Rejected', html);
   }
 
-  async sendBookingCancelled(email: string, bookingDetails: any): Promise<void> {
+  async sendBookingCancelled(user: {email: string, name: string}, bookingDetails: any): Promise<void> {
     const html = await this.renderTemplate('bookingCancelled', {
-      recipientEmail: email,
-      guestName: bookingDetails.user.name,
+      recipientEmail: user.email,
+      guestName: user.name,
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
       propertyImage: bookingDetails.property.imageUrl,
@@ -234,8 +234,8 @@ export class EmailService implements OnModuleInit {
       numberOfGuests: bookingDetails.numberOfGuests,
       confirmationCode: bookingDetails.confirmationCode,
       refundAmount: bookingDetails.refundAmount,
-      searchUrl: `${process.env.SITE_URL}/search`,
+      searchUrl: `${process.env.SITE_URL}`,
     });
-    await this.sendEmail(email, 'Booking Cancelled', html);
+    await this.sendEmail(user.email, 'Booking Cancelled', html);
   }
 }
