@@ -9,7 +9,9 @@ import {
   Location,
   PaginationInput,
   ImageConnection,
-  UpdatePropertyInput } from '../graphql';
+  UpdatePropertyInput,
+  BookingStatus
+} from '../graphql';
 import { Property as PropertyEntity } from './entities/property.entity';
 import { BookingService } from '../booking/booking.service';
 import { LocationService } from '../location/location.service';
@@ -19,6 +21,7 @@ import { CurrentUser } from 'auth/current-user.decorator';
 import { User } from 'user/entities/user.entity';
 import { OrganizationService } from 'organization/organization.service';
 import { NearbyPlaceService } from 'nearby-place/nearby-place.service';
+import { Bed as BedEntity } from './entities/bed.entity';
 @Resolver(() => Property)
 export class PropertyResolver {
   constructor(
@@ -188,7 +191,7 @@ export class PropertyResolver {
 
   @ResolveField()
   async beds(@Parent() property: Property) {
-    return this.propertyService.getBeds(property.id);
+    return this.propertyService.getBeds(property.id) || [] as BedEntity[];
   }
 
   @ResolveField()
@@ -209,5 +212,13 @@ export class PropertyResolver {
       throw new Error(`Location not found for property ${property.id}`);
     }
     return this.nearbyPlaceService.findWithinRadiusOfLocation(location, pagination, radiusInMi, radiusInKm);
+  }
+
+  @ResolveField()
+  async bookings(
+    @Parent() property: Property,
+    @Args('status', { nullable: true }) status?: BookingStatus,
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput) {
+    return this.bookingService.findByPropertyId(property.id, status, pagination);
   }
 }
