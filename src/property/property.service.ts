@@ -49,15 +49,16 @@ export class PropertyService {
     this.logger.debug('PropertyService initialized', 'PropertyService');
   }
 
-  async findById(id: string): Promise<PropertyEntity | null> {
-    const cacheKey = this.cacheService.generateCacheKey('single', id);
+  async findById(id: string, relations?: string[]): Promise<PropertyEntity | null> {
+    const cacheKey = this.cacheService.generateCacheKey('single', { id, relations });
     
     // Synchronous cache check
     const cached = await this.cacheService.get<PropertyEntity>('property', cacheKey);
     if (cached) return cached;
 
     const property = await this.propertyRepository.findOne({
-      where: { id }
+      where: { id },
+      relations
     });
 
     if (property) {
