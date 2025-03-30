@@ -15,6 +15,7 @@ import { Property } from 'property/entities/property.entity';
 import { User as UserEntity } from '../user/entities/user.entity';
 import { BookingStatus } from '../graphql';
 import { ClientKafka } from '@nestjs/microservices';
+import { LoggerService } from '../common/services/logger.service';
 @Injectable()
 export class BookingService {
   constructor(
@@ -22,7 +23,8 @@ export class BookingService {
     private readonly bookingRepository: Repository<Booking>,
     @Inject('KAFKA_SERVICE')
     private readonly kafkaClient: ClientKafka,
-    private readonly propertyService: PropertyService
+    private readonly propertyService: PropertyService,
+    private readonly logger: LoggerService
   ) {}
 
   private toGraphQL(booking: Booking): BookingType {
@@ -48,7 +50,9 @@ export class BookingService {
   private async fetchRequestedProperty(
     propertyId: string,
   ): Promise<Property | null> {
-    return await this.propertyService.findById(propertyId);
+    const property = await this.propertyService.findById(propertyId, ['images']);
+    this.logger.debug(`Fetched property ${propertyId}`, JSON.stringify(property), 'BookingService');
+    return property;
   }
 
   private requestedPropertyExists(
@@ -331,16 +335,6 @@ export class BookingService {
     });
 
     await this.bookingRepository.save(booking);
-    await this.kafkaClient.emit('booking.created', {
-      key: booking.id,
-      value: {
-        user,
-        bookingDetails: booking
-      },
-      headers: {
-        timestamp: new Date().toISOString(),
-      },
-    });
 
     if (!booking) {
       return {
@@ -350,6 +344,18 @@ export class BookingService {
         confirmationCode: null
       };
     }
+
+    await this.kafkaClient.emit('booking.created', {
+      key: booking.id,
+      value: {
+        user,
+        bookingDetails: booking,
+        property
+      },
+      headers: {
+        timestamp: new Date().toISOString(),
+      },
+    });
 
     return {
       success: true,
