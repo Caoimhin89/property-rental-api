@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Received - Pending Confirmation</title>
+    <link rel="stylesheet" href="base.css">
+</head>
+<body>
+    <div class="container">
+        <div class="email-wrapper">
+            <div class="header">
+                <img src="{{logoUrl}}" alt="Property Pursuit" class="logo">
+                <h1 style="color: #111827; font-size: 24px; font-weight: 700;">Booking Received</h1>
+                <div class="status-badge status-pending">Pending Confirmation</div>
+            </div>
+            
+            <div class="content">
+                <p class="mb-4">Dear {{guestName}},</p>
+                
+                <p class="mb-4">Thank you for choosing Property Pursuit. Your booking request has been received and is pending confirmation from the property owner. We'll notify you once it's confirmed.</p>
+
+                <div class="info-box">
+                    <h2 class="text-lg font-bold mb-4">Booking Details</h2>
+                    <img src="{{propertyImage}}" alt="{{propertyName}}" class="property-image">
+                    
+                    <h3 class="font-bold mb-2">{{propertyName}}</h3>
+                    <p class="text-gray mb-4">{{propertyAddress}}</p>
+
+                    <div class="mb-4">
+                        <p class="mb-2"><strong>Check-in:</strong> {{checkInDate}}</p>
+                        <p class="mb-2"><strong>Check-out:</strong> {{checkOutDate}}</p>
+                        <p class="mb-2"><strong>Guests:</strong> {{numberOfGuests}}</p>
+                        <p class="mb-2"><strong>Confirmation Code:</strong> {{confirmationCode}}</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-4">
+                        <p class="mb-2"><strong>Total Amount:</strong> {{totalAmount}}</p>
+                        <p class="text-sm text-gray">Payment will be processed upon confirmation</p>
+                    </div>
+                </div>
+
+                <p class="mb-4">What happens next?</p>
+                <ul style="margin-left: 20px; margin-bottom: 16px;">
+                    <li>The property owner will review your booking request</li>
+                    <li>You'll receive a confirmation email within 24 hours</li>
+                    <li>No payment will be processed until the booking is confirmed</li>
+                </ul>
+
+                <p class="mb-4">You can view your booking details and status anytime by clicking the button below:</p>
+
+                <a href="{{bookingUrl}}" class="button">View Booking Details</a>
+
+                <p class="text-sm text-gray mt-4">If you have any questions, please don't hesitate to contact our support team.</p>
+            </div>
+
+            <div class="footer">
+                <p>© {{currentYear}} Property Pursuit. All rights reserved.</p>
+                <p class="text-sm mt-2">This email was sent to {{recipientEmail}}.</p>
+                <p class="text-sm mt-2">
+                    <a href="{{unsubscribeUrl}}" style="color: #6B7280; text-decoration: underline;">Unsubscribe</a> •
+                    <a href="{{privacyUrl}}" style="color: #6B7280; text-decoration: underline;">Privacy Policy</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

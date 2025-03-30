@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { EmailService } from './email.service';
 import { LoggerService } from '../common/services/logger.service';
-
+import { User as UserEntity } from '../user/entities/user.entity';
 @Controller()
 export class EmailController {
   constructor(
@@ -11,15 +11,19 @@ export class EmailController {
   ) {}
 
   @EventPattern('user.registered')
-  async handleUserRegistration(@Payload() data: { email: string; verificationToken: string }) {
+  async handleUserRegistration(@Payload() data: { email: string; userName: string; verificationCode: string; verificationUrl: string }) {
     this.logger.debug('Received user registration event', 'EmailController', data);
-    await this.emailService.sendVerificationEmail(data.email, data.verificationToken);
+    await this.emailService.sendVerificationEmail(data.email, {
+      userName: data.userName,
+      verificationCode: data.verificationCode,
+      verificationUrl: data.verificationUrl
+    });
   }
 
   @EventPattern('booking.created')
-  async handleBookingCreated(@Payload() data: { email: string; bookingDetails: any }) {
+  async handleBookingCreated(@Payload() data: { user: UserEntity; bookingDetails: any }) {
     this.logger.debug('Received booking creation event', 'EmailController', data);
-    await this.emailService.sendBookingPendingConfirmation(data.email, data.bookingDetails);
+    await this.emailService.sendBookingPendingConfirmation(data.user, data.bookingDetails);
   }
 
   @EventPattern('booking.confirmed')

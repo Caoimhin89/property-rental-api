@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Cancelled</title>
+    <link rel="stylesheet" href="base.css">
+</head>
+<body>
+    <div class="container">
+        <div class="email-wrapper">
+            <div class="header">
+                <img src="{{logoUrl}}" alt="Property Pursuit" class="logo">
+                <h1 style="color: #111827; font-size: 24px; font-weight: 700;">Booking Cancelled</h1>
+                <div class="status-badge status-cancelled">Cancelled</div>
+            </div>
+            
+            <div class="content">
+                <p class="mb-4">Dear {{guestName}},</p>
+                
+                <p class="mb-4">Your booking has been cancelled as requested. We're sorry you won't be staying with us this time.</p>
+
+                <div class="info-box">
+                    <h2 class="text-lg font-bold mb-4">Cancelled Booking Details</h2>
+                    <img src="{{propertyImage}}" alt="{{propertyName}}" class="property-image">
+                    
+                    <h3 class="font-bold mb-2">{{propertyName}}</h3>
+                    <p class="text-gray mb-4">{{propertyAddress}}</p>
+
+                    <div class="mb-4">
+                        <p class="mb-2"><strong>Original Check-in:</strong> {{checkInDate}}</p>
+                        <p class="mb-2"><strong>Original Check-out:</strong> {{checkOutDate}}</p>
+                        <p class="mb-2"><strong>Guests:</strong> {{numberOfGuests}}</p>
+                        <p class="mb-2"><strong>Confirmation Code:</strong> {{confirmationCode}}</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="mb-4">
+                        <p class="mb-2"><strong>Refund Amount:</strong> {{refundAmount}}</p>
+                        <p class="text-sm text-gray">Refund will be processed within 5-7 business days</p>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h3 class="font-bold mb-2">Refund Information</h3>
+                    <p class="mb-4">Your refund has been initiated according to our cancellation policy:</p>
+                    <ul style="margin-left: 20px; margin-bottom: 16px;">
+                        <li>Refund amount: {{refundAmount}}</li>
+                        <li>Refund method: Original payment method</li>
+                        <li>Processing time: 5-7 business days</li>
+                    </ul>
+                    <p class="text-sm text-gray">The refund will be processed to the original payment method used for the booking.</p>
+                </div>
+
+                <p class="mb-4">Looking to book another stay? Explore our available properties:</p>
+
+                <a href="{{searchUrl}}" class="button">Browse Properties</a>
+
+                <p class="text-sm text-gray mt-4">
+                    If you have any questions about your cancellation or refund, please don't hesitate to contact our support team.
+                    We hope to welcome you on another stay in the future.
+                </p>
+            </div>
+
+            <div class="footer">
+                <p>© {{currentYear}} Property Pursuit. All rights reserved.</p>
+                <p class="text-sm mt-2">This email was sent to {{recipientEmail}}.</p>
+                <p class="text-sm mt-2">
+                    <a href="{{unsubscribeUrl}}" style="color: #6B7280; text-decoration: underline;">Unsubscribe</a> •
+                    <a href="{{privacyUrl}}" style="color: #6B7280; text-decoration: underline;">Privacy Policy</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
