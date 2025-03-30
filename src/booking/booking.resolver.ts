@@ -68,14 +68,14 @@ export class BookingResolver {
     @Args('bookingId') bookingId: string,
     @CurrentUser() user: User
   ): Promise<BookingType> {
-    return this.bookingService.confirmBooking(bookingId, user);
+    return this.bookingService.confirmBooking(bookingId, user) as unknown as BookingType;
   }
 
   async cancelBooking(
     @Args('bookingId') bookingId: string,
     @CurrentUser() user: User
   ): Promise<BookingType> {
-    return this.bookingService.cancelBooking(bookingId, user);
+    return this.bookingService.cancelBooking(bookingId, user) as unknown as BookingType;
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -84,6 +84,6 @@ export class BookingResolver {
     @Args('bookingId') bookingId: string,
     @CurrentUser() user: User
   ): Promise<BookingType> {
-    return this.bookingService.rejectBooking(bookingId, user);
+    return this.bookingService.rejectBooking(bookingId, user) as unknown as BookingType;
   }
 } 

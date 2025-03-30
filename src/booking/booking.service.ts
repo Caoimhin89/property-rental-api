@@ -139,11 +139,104 @@ export class BookingService {
     });
   }
 
-  async findByPropertyId(propertyId: string): Promise<Booking[]> {
-    return this.bookingRepository.find({
-      where: { property: { id: propertyId } },
-      relations: ['user'],
-    });
+  async findByPropertyId(
+    propertyId: string, 
+    status?: BookingStatus, 
+    pagination?: PaginationInput
+  ): Promise<Connection<Booking>> {
+    const query = this.bookingRepository.createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.property', 'property')
+      .leftJoinAndSelect('booking.user', 'user')
+      .where('property.id = :propertyId', { propertyId });
+
+    if (status) {
+      query.andWhere('booking.status = :status', { status });
+    }
+
+    // Handle forward pagination
+    if (pagination?.after) {
+      const decodedCursor = this.decodeCursor(pagination.after);
+      query.andWhere(
+        '(booking.createdAt, booking.id) < (:createdAt, :id)',
+        { 
+          createdAt: decodedCursor.createdAt,
+          id: decodedCursor.id 
+        }
+      );
+    }
+
+    // Handle backward pagination
+    if (pagination?.before) {
+      const decodedCursor = this.decodeCursor(pagination.before);
+      query.andWhere(
+        '(booking.createdAt, booking.id) > (:createdAt, :id)',
+        { 
+          createdAt: decodedCursor.createdAt,
+          id: decodedCursor.id 
+        }
+      );
+    }
+
+    // Set limit and order
+    const limit = (pagination?.first || pagination?.last || 10) + 1;
+    const isBackward = !!pagination?.last;
+    
+    query
+      .orderBy('booking.createdAt', isBackward ? 'ASC' : 'DESC')
+      .addOrderBy('booking.id', isBackward ? 'ASC' : 'DESC')
+      .take(limit);
+
+    // Execute query
+    const [items, totalCount] = await query.getManyAndCount();
+
+    // Handle pagination metadata
+    let hasNextPage = false;
+    let hasPreviousPage = false;
+
+    if (items.length > (pagination?.first || pagination?.last || 10)) {
+      hasNextPage = !isBackward;
+      hasPreviousPage = isBackward;
+      items.pop();
+    }
+
+    // Reverse items if backward pagination
+    if (isBackward) {
+      items.reverse();
+    }
+
+    // Create edges with cursors
+    const edges = items.map(item => ({
+      node: item,
+      cursor: this.encodeCursor(item)
+    }));
+
+    return {
+      edges,
+      pageInfo: {
+        hasNextPage,
+        hasPreviousPage,
+        startCursor: edges[0]?.cursor,
+        endCursor: edges[edges.length - 1]?.cursor
+      },
+      totalCount
+    };
+  }
+
+  // Helper methods for cursor encoding/decoding
+  private encodeCursor(booking: Booking): string {
+    const cursorData = {
+      id: booking.id,
+      createdAt: booking.createdAt.toISOString()
+    };
+    return Buffer.from(JSON.stringify(cursorData)).toString('base64');
+  }
+
+  private decodeCursor(cursor: string): { id: string; createdAt: Date } {
+    const data = JSON.parse(Buffer.from(cursor, 'base64').toString());
+    return {
+      id: data.id,
+      createdAt: new Date(data.createdAt)
+    };
   }
 
   async findByUserId(
@@ -448,7 +541,7 @@ export class BookingService {
     action: 'confirm' | 'reject' | 'cancel',
     booking: Booking,
     user: UserEntity): Promise<void> {
-    await this.kafkaClient.emit(`booking.status.${action}`, {
+    await this.kafkaClient.emit(`booking.${action}`, {
       key: booking.id,
       value: {
         user: {

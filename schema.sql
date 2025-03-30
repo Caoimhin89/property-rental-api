@@ -454,6 +454,7 @@ CREATE TABLE notifications (
 );
 
 -- Indexes
+CREATE INDEX idx_bookings_pagination ON bookings (created_at DESC, id DESC);
 CREATE INDEX idx_bookings_revenue ON bookings(property_id, start_date, end_date, status, total_price);
 CREATE INDEX idx_bookings_stats ON bookings(property_id, start_date, end_date, status);
 CREATE INDEX idx_maintenance_requests_stats ON maintenance_requests(property_id, created_at, status);
