@@ -1,6 +1,16 @@
 import { Connection } from "./types/types";
 
-export function formatDate(date: Date, locale: string = 'en-US'): string {
+export function formatCurrency(amount: number, locale: string = 'en-US'): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: (locale === 'en-US') ? 'USD' : 'RUB'
+  }).format(amount);
+}
+
+export function formatDate(date: Date | string, locale: string = 'en-US'): string {
+  if (typeof date === 'string') {
+    date = new Date(date);
+  }
   return date.toLocaleDateString(locale, {
     year: 'numeric',
     month: 'long',
