@@ -6,12 +6,16 @@ import * as Handlebars from 'handlebars';
 import juice from 'juice';
 import { LoggerService } from '../common/services/logger.service';
 import { User as UserEntity } from '../user/entities/user.entity';
-import { formatDate } from 'common/utils';
+import { Property as PropertyEntity } from 'property/entities/property.entity';
+import { formatCurrency, formatDate } from 'common/utils';
+import { join } from 'path';
+import { readFileSync } from 'fs';
 @Injectable()
 export class EmailService implements OnModuleInit {
   private transporter: nodemailer.Transporter;
   private templates: Map<string, Handlebars.TemplateDelegate> = new Map();
   private baseCSS: string;
+  private locale: string = process.env.LOCALE || 'en-US';
   
   constructor(private readonly logger: LoggerService) {
     this.transporter = nodemailer.createTransport({
@@ -94,6 +98,18 @@ export class EmailService implements OnModuleInit {
     }
   }
 
+  private getSvgDataUrl(): string {
+    try {
+      const svgPath = join(process.cwd(), 'dist', 'email', 'emailTemplates', 'logo.svg');
+      const svgContent = readFileSync(svgPath, 'utf8');
+      const base64 = Buffer.from(svgContent).toString('base64');
+      return `data:image/svg+xml;base64,${base64}`;
+    } catch (error) {
+      console.error('Error loading SVG:', error);
+      return ''; // Or return a fallback image URL
+    }
+  }
+
   private async renderTemplate(templateName: string, data: any): Promise<string> {
     const template = this.templates.get(templateName);
     if (!template) {
@@ -153,19 +169,20 @@ export class EmailService implements OnModuleInit {
     await this.sendEmail(email, 'Verify Your Email', html);
   }
 
-  async sendBookingPendingConfirmation(user: UserEntity, bookingDetails: any): Promise<void> {
+  async sendBookingPendingConfirmation(user: UserEntity, bookingDetails: any, property: PropertyEntity): Promise<void> {
     const html = await this.renderTemplate('bookingPending', {
+      logoUrl: this.getSvgDataUrl(),
       recipientEmail: user.email,
       guestName: user.name,
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
-      propertyImage: bookingDetails.property.imageUrl,
+      propertyImage: property.images?.[0]?.url,
       checkInDate: formatDate(bookingDetails.startDate),
       checkOutDate: formatDate(bookingDetails.endDate),
       numberOfGuests: bookingDetails.numberOfGuests,
       confirmationCode: bookingDetails.confirmationCode,
-      totalAmount: bookingDetails.totalPrice,
-      bookingUrl: `${process.env.SITE_URL}/bookings/${bookingDetails.id}`,
+      totalAmount: formatCurrency(bookingDetails.totalPrice, this.locale),
+      bookingUrl: `${process.env.SITE_URL}/booking/${bookingDetails.id}`,
     });
     await this.sendEmail(user.email, 'Booking Received - Pending Confirmation', html);
   }
