@@ -8,13 +8,15 @@ import { forwardRef } from '@nestjs/common';
 import { DataLoaderModule } from '../data-loader/data-loader.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { PropertyModule } from '../property/property.module';
+import { KafkaModule } from '../kafka/kafka.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     BookingModule,
     forwardRef(() => DataLoaderModule),
     forwardRef(() => OrganizationModule),
-    forwardRef(() => PropertyModule)
+    forwardRef(() => PropertyModule),
+    forwardRef(() => KafkaModule),
   ],
   providers: [UserService, UserResolver],
   exports: [UserService]
