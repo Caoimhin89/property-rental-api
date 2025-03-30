@@ -15,6 +15,7 @@ export class LlmResolver {
     @Args('propertyId') propertyId: string,
     @Args('details') details: PropertyDescriptionInput
   ): Promise<string> {
+    console.log('Generating property description');
     return this.llmService.generatePropertyDescription({
         ...details,
         nearbyPlaces: details.nearbyPlaces || [],

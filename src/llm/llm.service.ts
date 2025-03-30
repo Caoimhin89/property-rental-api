@@ -33,7 +33,7 @@ export class LlmService {
         messages: [
           {
             role: "system",
-            content: "You are a professional real estate copywriter. Create engaging, accurate, and professional property descriptions."
+            content: "You are a professional real estate copywriter for a medium to long-term rental company. Create engaging, accurate, and professional property descriptions."
           },
           {
             role: "user",
