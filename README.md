@@ -5,14 +5,16 @@ A GraphQL API for property rentals built with NestJS, TypeORM, and PostgreSQL.
 ## Features
 
 - 🏠 Property listings with detailed information
+- 🏢 Organization management
 - 📍 Location tracking with nearby places
 - 🏷️ Dynamic pricing and availability
 - ⭐ Review system with ratings
+- 🔧 Maintenance request system
 - 🔄 Cursor-based pagination
 - 📸 Property images management
 - 🏃‍♂️ Performance optimized with DataLoader pattern & caching
+- 📫 Transactional emails
 - 🔔 Notifications (IN-PROGRESS)
-- 📫 Transactional emails (TODO)
 - 🛍️ Marketplace (TODO)
 
 ## Tech Stack
