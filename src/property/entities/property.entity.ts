@@ -22,8 +22,14 @@ import { Organization } from '../../organization/entities/organization.entity';
 import { MaintenanceRequest } from 'maintenance/entities/maintenance-request.entity';
 import { Bed as BedEntity } from './bed.entity';
 import { User as UserEntity } from '../../user/entities/user.entity';
+import { ObjectType, Field, ID } from '@nestjs/graphql';
+
+@ObjectType()
 @Entity('properties')
 export class Property {
+  __typename?: 'Property';
+
+  @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

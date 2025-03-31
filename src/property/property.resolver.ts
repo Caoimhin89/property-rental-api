@@ -1,7 +1,8 @@
-import { Args, Query, Resolver, ResolveField, Parent, Mutation } from '@nestjs/graphql';
+import { Args, Query, Resolver, ResolveField, Parent, Mutation, createUnionType } from '@nestjs/graphql';
 import { PropertyService } from './property.service';
 import { DataLoaderService } from '../data-loader/data-loader.service';
 import {
+  Error as ErrorType,
   CreatePropertyInput,
   Property,
   PropertyConnection,
@@ -10,7 +11,11 @@ import {
   PaginationInput,
   ImageConnection,
   UpdatePropertyInput,
-  BookingStatus
+  BookingStatus,
+  CreateBlockedDateInput,
+  BlockedDate,
+  CreatePriceRuleInput,
+  PriceRule
 } from '../graphql';
 import { Property as PropertyEntity } from './entities/property.entity';
 import { BookingService } from '../booking/booking.service';
@@ -22,8 +27,23 @@ import { User } from 'user/entities/user.entity';
 import { OrganizationService } from 'organization/organization.service';
 import { NearbyPlaceService } from 'nearby-place/nearby-place.service';
 import { Bed as BedEntity } from './entities/bed.entity';
+import { PropertyNotFoundException, PropertyUnauthorizedException } from './property.errors';
+import { Logger } from '@nestjs/common';
+
+export const PropertyResult = createUnionType({
+  name: 'PropertyResult',
+  types: () => [Property, ErrorType],
+  resolveType(value) {
+    if ('code' in value) {
+      return ErrorType;
+    }
+    return Property;
+  },
+});
 @Resolver(() => Property)
 export class PropertyResolver {
+  private readonly logger = new Logger(PropertyResolver.name);
+
   constructor(
     private readonly propertyService: PropertyService,
     private readonly dataLoader: DataLoaderService,
@@ -31,7 +51,7 @@ export class PropertyResolver {
     private readonly locationService: LocationService,
     private readonly organizationService: OrganizationService,
     private readonly nearbyPlaceService: NearbyPlaceService
-  ) {}
+  ) { }
 
   @UseGuards(JwtAuthGuard)
   @Mutation(() => Property)
@@ -40,13 +60,41 @@ export class PropertyResolver {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Mutation(() => Property)
+  @Mutation(() => PropertyResult)
   async updateProperty(
     @Args('id') id: string,
     @Args('input') input: UpdatePropertyInput,
     @CurrentUser() user: User
   ) {
-    return await this.propertyService.update(id, input, user);
+    try {
+      const property = await this.propertyService.update(id, input, user);
+      return {
+        ...property,
+        __typename: 'Property'
+      };
+    } catch (error) {
+      if (error instanceof PropertyNotFoundException) {
+        return {
+          code: 'PROPERTY_NOT_FOUND',
+          message: `Property with ID ${id} not found`,
+          __typename: 'Error'
+        } as ErrorType;
+      }
+      if (error instanceof PropertyUnauthorizedException) {
+        return {
+          code: 'UNAUTHORIZED',
+          message: 'User is not authorized to update this property',
+          __typename: 'Error'
+        } as ErrorType;
+      }
+      // Handle other specific errors...
+      return {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred',
+        details: error.message,
+        __typename: 'Error'
+      } as ErrorType;
+    }
   }
 
   @Mutation(() => Property)
@@ -67,6 +115,23 @@ export class PropertyResolver {
   ) {
     return await this.propertyService.removeFromFavorites(user.id, propertyId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => [BlockedDate])
+  async createBlockedDates(
+    @Args('propertyId') propertyId: string,
+    @Args('input') input: CreateBlockedDateInput[]) {
+    return await this.propertyService.createBlockedDates(propertyId, input);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => [PriceRule])
+  async createPriceRules(
+    @Args('propertyId') propertyId: string,
+    @Args('input') input: CreatePriceRuleInput[]) {
+    return await this.propertyService.createPriceRules(propertyId, input);
+  }
+  
   
   @Query(() => Property, { nullable: true })
   async propertyById(@Args('id') id: string) {
@@ -82,7 +147,7 @@ export class PropertyResolver {
       filter,
       pagination
     });
-    
+
     return {
       ...connection,
       edges: connection.edges.map(edge => ({
@@ -103,7 +168,7 @@ export class PropertyResolver {
     }
 
     const connection = await this.propertyService.getFavoritesByUserId(user.id, pagination);
-    
+
     return {
       ...connection,
       edges: connection.edges.map(edge => ({
@@ -185,8 +250,15 @@ export class PropertyResolver {
   }
 
   @ResolveField()
-  async priceRules(@Parent() property: Property) {
-    return this.propertyService.getPriceRules(property.id);
+  async priceRules(@Parent() property: PropertyEntity) {
+    try {
+      const rules = await this.propertyService.getPriceRules(property.id);
+      this.logger.debug(`Resolved ${rules.length} price rules for property ${property.id}`);
+      return rules;
+    } catch (error) {
+      this.logger.error(`Error resolving price rules for property ${property.id}`, error);
+      return [];
+    }
   }
 
   @ResolveField()

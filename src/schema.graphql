@@ -1016,10 +1016,10 @@ type Mutation {
   createProperty(input: CreatePropertyInput!): Property!
   updateProperty(id: ID!, input: UpdatePropertyInput!): PropertyResult!
   removeProperty(id: ID!): Boolean!
-  blockDates(propertyId: ID!, input: CreateBlockedDateInput!): BlockedDate!
-  setPriceRule(propertyId: ID!, input: CreatePriceRuleInput!): PriceRule!
   addToFavorites(propertyId: ID!): Property!
   removeFromFavorites(propertyId: ID!): Property!
+  createBlockedDates(propertyId: ID!, input: [CreateBlockedDateInput!]!): [BlockedDate!]!
+  createPriceRules(propertyId: ID!, input: [CreatePriceRuleInput!]!): [PriceRule!]!
 
   ## Location Mutations
   createLocation(input: CreateLocationInput!): Location!

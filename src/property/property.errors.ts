@@ -18,3 +18,12 @@ export class PropertyNotFoundException extends HttpException {
       }, HttpStatus.FORBIDDEN);
     }
   }
+
+  export class PropertyUpdateFailedException extends HttpException {
+    constructor(id: string) {
+      super({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: `Failed to update property with ID ${id}`,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }

@@ -543,6 +543,7 @@ export class Property {
     priceRules: PriceRule[];
     maintenanceRequests?: MaintenanceRequestConnection;
     nearbyPlaces?: NearbyPlaceConnection;
+    bookings?: BookingConnection;
     createdAt: DateTime;
     updatedAt: DateTime;
     isAvailable?: boolean;
@@ -1020,13 +1021,13 @@ export abstract class IMutation {
 
     abstract removeProperty(id: string): boolean | Promise<boolean>;
 
-    abstract blockDates(propertyId: string, input: CreateBlockedDateInput): BlockedDate | Promise<BlockedDate>;
-
-    abstract setPriceRule(propertyId: string, input: CreatePriceRuleInput): PriceRule | Promise<PriceRule>;
-
     abstract addToFavorites(propertyId: string): Property | Promise<Property>;
 
     abstract removeFromFavorites(propertyId: string): Property | Promise<Property>;
+
+    abstract createBlockedDates(propertyId: string, input: CreateBlockedDateInput[]): BlockedDate[] | Promise<BlockedDate[]>;
+
+    abstract createPriceRules(propertyId: string, input: CreatePriceRuleInput[]): PriceRule[] | Promise<PriceRule[]>;
 
     abstract createLocation(input: CreateLocationInput): Location | Promise<Location>;
 

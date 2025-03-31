@@ -4,20 +4,18 @@ import { LocationService } from '../location/location.service';
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Property as PropertyEntity } from './entities/property.entity';
 import { User as UserEntity } from 'user/entities/user.entity';
-import { Property as PropertyType, PropertyFilter, PaginationInput, YearBuiltOperator, PropertySortField, SortOrder, PageInfo, AreaUnit, UpdatePropertyInput } from '../graphql';
+import { Property as PropertyType, PropertyFilter, PaginationInput, YearBuiltOperator, PropertySortField, SortOrder, PageInfo, AreaUnit, UpdatePropertyInput, UpdatePriceRuleInput, UpdateBlockedDateInput, BlockedDate } from '../graphql';
 import { acresToSquareMeters, milesToKilometers, squareFeetToSquareMeters, toCursor, fromCursor } from '../common/utils';
 import { CreatePropertyInput } from '../graphql';
-import { BlockedDate } from './entities/blocked-date.entity';
-import { PriceRule } from './entities/price-rule.entity';
-import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { BlockedDate as BlockedDateEntity } from './entities/blocked-date.entity';
+import { PriceRule as PriceRuleEntity } from './entities/price-rule.entity';
+import { LessThanOrEqual, MoreThanOrEqual, Not } from 'typeorm';
 import { LoggerService } from '../common/services/logger.service';
-import { PropertyNotFoundException, PropertyUnauthorizedException } from './property.errors';
+import { PropertyNotFoundException, PropertyUnauthorizedException, PropertyUpdateFailedException } from './property.errors';
 import { CacheService } from '../cache/cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CacheSetEvent, CacheInvalidateEvent } from '../cache/cache.events';
 import { Bed } from './entities/bed.entity';
-import { BadRequestException } from '@nestjs/common';
-import { Brackets } from 'typeorm';
 import { buildPaginatedResponse } from '../common/utils';
 import { Connection } from '../common/types/types';
 
@@ -35,10 +33,10 @@ export class PropertyService {
   constructor(
     @InjectRepository(PropertyEntity)
     private readonly propertyRepository: Repository<PropertyEntity>,
-    @InjectRepository(BlockedDate)
-    private readonly blockedDateRepository: Repository<BlockedDate>,
-    @InjectRepository(PriceRule)
-    private readonly priceRuleRepository: Repository<PriceRule>,
+    @InjectRepository(BlockedDateEntity)
+    private readonly blockedDateRepository: Repository<BlockedDateEntity>,
+    @InjectRepository(PriceRuleEntity)
+    private readonly priceRuleRepository: Repository<PriceRuleEntity>,
     @InjectRepository(Bed)
     private readonly bedRepository: Repository<Bed>,
     private readonly logger: LoggerService,
@@ -290,7 +288,7 @@ export class PropertyService {
     propertyId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<PriceRule[]> {
+  ): Promise<PriceRuleEntity[]> {
     return this.priceRuleRepository.find({
       where: {
         propertyId,
@@ -303,18 +301,26 @@ export class PropertyService {
     });
   }
 
-  async getBlockedDates(propertyId: string): Promise<BlockedDate[]> {
+  async getBlockedDates(propertyId: string): Promise<BlockedDateEntity[]> {
     return this.blockedDateRepository.find({
       where: { propertyId },
       order: { startDate: 'ASC' }
     });
   }
 
-  async getPriceRules(propertyId: string): Promise<PriceRule[]> {
-    return this.priceRuleRepository.find({
-      where: { propertyId },
-      order: { startDate: 'ASC' }
-    });
+  async getPriceRules(propertyId: string): Promise<PriceRuleEntity[]> {
+    try {
+      const rules = await this.priceRuleRepository.find({
+        where: { propertyId },
+        order: { startDate: 'ASC' }
+      });
+      
+      this.logger.debug(`Found ${rules.length} price rules for property ${propertyId}`);
+      return rules;
+    } catch (error) {
+      this.logger.error(`Error fetching price rules for property ${propertyId}`, error);
+      return [];
+    }
   }
 
   async getBeds(propertyId: string): Promise<Bed[]> {
@@ -428,7 +434,143 @@ export class PropertyService {
     return propertyWithoutLocation;
   }
 
-  async update(id: string, input: UpdatePropertyInput, user: UserEntity): Promise<PropertyEntity> {
+  async createPriceRules(propertyId: string, priceRules: UpdatePriceRuleInput[]): Promise<PriceRuleEntity[]> {
+    try {
+      if (!priceRules.length) {
+        return [];
+      }
+
+      const newRules = priceRules.map(rule => 
+        this.priceRuleRepository.create({
+          propertyId,
+          startDate: rule.startDate,
+          endDate: rule.endDate,
+          price: rule.price,
+          description: rule.description
+        } as PriceRuleEntity)
+      );
+
+      const savedRules = await this.priceRuleRepository.save(newRules);
+      this.logger.debug(`Created ${savedRules.length} new price rules for property ${propertyId}`);
+      return savedRules;
+    } catch (error) {
+      this.logger.error('Error creating price rules', 'PropertyService', JSON.stringify({ propertyId, error }));
+      throw error;
+    }
+  }
+
+  async createBlockedDates(propertyId: string, blockedDates: UpdateBlockedDateInput[]): Promise<BlockedDateEntity[]> {
+    try {
+      if (!blockedDates.length) {
+        return [];
+      }
+
+      const newDates = blockedDates.map(date => 
+        this.blockedDateRepository.create({
+          propertyId,
+          startDate: date.startDate,
+          endDate: date.endDate,
+          reason: date.reason
+        } as BlockedDateEntity)
+      );
+
+      const savedDates = await this.blockedDateRepository.save(newDates);
+      this.logger.debug(`Created ${savedDates.length} new blocked dates for property ${propertyId}`);
+      return savedDates;
+    } catch (error) {
+      this.logger.error('Error creating blocked dates', 'PropertyService', JSON.stringify({ propertyId, error }));
+      throw error;
+    }
+  }
+
+  private async updatePriceRules(propertyId: string, priceRules: UpdatePriceRuleInput[]): Promise<void> {
+    try {
+      // Get existing price rules
+      const existingRules = await this.priceRuleRepository.find({
+        where: { propertyId }
+      });
+
+      // Separate rules into categories
+      const existingRuleIds = new Set(existingRules.map(rule => rule.id));
+      const rulesToUpdate = priceRules.filter(rule => rule.id && existingRuleIds.has(rule.id));
+      const rulesToCreate = priceRules.filter(rule => !rule.id);
+      const rulesToDelete = existingRules.filter(rule => 
+        !priceRules.some(newRule => newRule.id === rule.id)
+      );
+
+      // Handle updates
+      if (rulesToUpdate.length) {
+        await Promise.all(rulesToUpdate.map((rule: UpdatePriceRuleInput) =>
+          this.priceRuleRepository.update(rule.id!, {
+            startDate: rule.startDate,
+            endDate: rule.endDate,
+            price: rule.price,
+            description: rule.description
+          } as PriceRuleEntity)
+        ));
+        this.logger.debug(`Updated ${rulesToUpdate.length} price rules`);
+      }
+
+      // Handle creates
+      if (rulesToCreate.length) {
+        await this.createPriceRules(propertyId, rulesToCreate);
+      }
+
+      // Handle deletes
+      if (rulesToDelete.length) {
+        await this.priceRuleRepository.remove(rulesToDelete);
+        this.logger.debug(`Deleted ${rulesToDelete.length} price rules`);
+      }
+    } catch (error) {
+      this.logger.error('Error updating price rules', 'PropertyService', error);
+      throw error;
+    }
+  }
+
+  private async updateBlockedDates(propertyId: string, blockedDates: UpdateBlockedDateInput[]): Promise<void> {
+    try {
+      // Get existing blocked dates
+      const existingDates = await this.blockedDateRepository.find({
+        where: { propertyId }
+      });
+
+      // Separate dates into categories
+      const existingDateIds = new Set(existingDates.map(date => date.id));
+      const datesToUpdate = blockedDates.filter(date => date.id && existingDateIds.has(date.id));
+      const datesToCreate = blockedDates.filter(date => !date.id);
+      const datesToDelete = existingDates.filter(date => 
+        !blockedDates.some(newDate => newDate.id === date.id)
+      );
+
+      // Handle updates
+      if (datesToUpdate.length) {
+        await Promise.all(datesToUpdate.map((date: UpdateBlockedDateInput) =>
+          this.blockedDateRepository.update(date.id!, {
+            startDate: date.startDate,
+            endDate: date.endDate,
+            reason: date.reason
+          } as BlockedDateEntity)
+        ));
+        this.logger.debug(`Updated ${datesToUpdate.length} blocked dates`);
+      }
+
+      // Handle creates
+      if (datesToCreate.length) {
+        await this.createBlockedDates(propertyId, datesToCreate);
+      }
+
+      // Handle deletes
+      if (datesToDelete.length) {
+        await this.blockedDateRepository.remove(datesToDelete);
+        this.logger.debug(`Deleted ${datesToDelete.length} blocked dates`);
+      }
+    } catch (error) {
+      this.logger.error('Error updating blocked dates', 'PropertyService', error);
+      throw error;
+    }
+  }
+
+  async update(id: string, input: UpdatePropertyInput, user: UserEntity): Promise<PropertyEntity | null> {
     // Check if property exists
     let property: PropertyEntity;
     try {
@@ -441,6 +583,15 @@ export class PropertyService {
     // Check if user is authorized to update property
     if (user.organizationMembership.organizationId !== property.organizationId) {
       throw new PropertyUnauthorizedException();
+    }
+
+    // Handle price rules and blocked dates updates
+    if (input.priceRules) {
+      await this.updatePriceRules(id, input.priceRules);
+    }
+
+    if (input.blockedDates) {
+      await this.updateBlockedDates(id, input.blockedDates);
     }
 
     // Enrich location with coordinates
@@ -475,37 +626,20 @@ export class PropertyService {
             ...(geoEnrichedLocation.latitude && { latitude: geoEnrichedLocation.latitude }),
             ...(geoEnrichedLocation.longitude && { longitude: geoEnrichedLocation.longitude }),
           }
-        }),
-        ...(input.blockedDates && { blockedDates: input.blockedDates.map(blockedDate => ({
-          ...blockedDate,
-          ...(blockedDate.id && { id: blockedDate.id }),
-          ...(blockedDate.startDate && { startDate: blockedDate.startDate }),
-          ...(blockedDate.endDate && { endDate: blockedDate.endDate }),
-          ...(blockedDate.reason && { reason: blockedDate.reason })
-        })) }),
-        ...(input.priceRules && { priceRules: input.priceRules.map(priceRule => ({
-            ...priceRule,
-            ...(priceRule.id && { id: priceRule.id }),
-            ...(priceRule.startDate && { startDate: priceRule.startDate }),
-            ...(priceRule.endDate && { endDate: priceRule.endDate }),
-            ...(priceRule.price && { price: priceRule.price }),
-            ...(priceRule.description && { description: priceRule.description })
-          }))
         })
       });
       const savedProperty = await this.propertyRepository.save(updatedProperty);
+      if (!savedProperty) {
+        throw new PropertyUpdateFailedException(id);
+      }
       
       // Asynchronous cache invalidation
-      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
-        'property',
-        'single:*'
-      ));
-      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent(
-        'property',
-        'list:*'
-      ));
+      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent('property', 'single:*'));
+      this.eventEmitter.emit('cache.invalidate', new CacheInvalidateEvent('property', 'list:*'));
 
+      // Return property
       return savedProperty;
+
     } catch (error: any) {
       this.logger.error('Error updating property', 'PropertyService', error);
       throw error;

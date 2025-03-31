@@ -13,10 +13,10 @@ export class PriceRule {
   @JoinColumn({ name: 'property_id' })
   property: Property;
 
-  @Column('date', { name: 'start_date' })
+  @Column('timestamp with time zone', { name: 'start_date' })
   startDate: Date;
 
-  @Column('date', { name: 'end_date' })
+  @Column('timestamp with time zone', { name: 'end_date' })
   endDate: Date;
 
   @Column('decimal', { precision: 10, scale: 2 })
