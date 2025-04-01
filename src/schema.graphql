@@ -228,6 +228,18 @@ type LocationSuggestion {
   longitude: Float
 }
 
+type PresignedUrl {
+  url: String!
+  key: String!
+  expiresIn: Int!
+}
+
+input FileUploadInput {
+  fileName: String!
+  contentType: String!
+  folder: String
+}
+
 # Scalar Types
 scalar DateTime
 scalar Money
@@ -1068,6 +1080,10 @@ type Mutation {
 
   ## LLM Mutations
   generatePropertyDescription(propertyId: ID!, details: PropertyDescriptionInput!): String!
+
+  ## File Mutations
+  getPresignedUploadUrl(input: FileUploadInput!): PresignedUrl!
+  deleteFile(key: String!): Boolean!
 }
 
 # Query Types
@@ -1129,4 +1145,5 @@ type Query {
     userId: ID!,
     pagination: PaginationInput
   ): FavoritesConnection!
+  getPresignedDownloadUrl(key: String!): String!
 }

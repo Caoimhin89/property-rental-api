@@ -318,6 +318,12 @@ export class LocationSuggestionsInput {
     query: string;
 }
 
+export class FileUploadInput {
+    fileName: string;
+    contentType: string;
+    folder?: Nullable<string>;
+}
+
 export class PropertyDescriptionInput {
     type: string;
     bedrooms: number;
@@ -505,6 +511,13 @@ export class LocationSuggestion {
     postalCode?: Nullable<string>;
     latitude?: Nullable<number>;
     longitude?: Nullable<number>;
+}
+
+export class PresignedUrl {
+    __typename?: 'PresignedUrl';
+    url: string;
+    key: string;
+    expiresIn: number;
 }
 
 export class Bed {
@@ -1084,6 +1097,10 @@ export abstract class IMutation {
     abstract markAllNotificationsAsRead(userId: string): boolean | Promise<boolean>;
 
     abstract generatePropertyDescription(propertyId: string, details: PropertyDescriptionInput): string | Promise<string>;
+
+    abstract getPresignedUploadUrl(input: FileUploadInput): PresignedUrl | Promise<PresignedUrl>;
+
+    abstract deleteFile(key: string): boolean | Promise<boolean>;
 }
 
 export abstract class IQuery {
@@ -1142,6 +1159,8 @@ export abstract class IQuery {
     abstract locationSuggestions(input: LocationSuggestionsInput): Nullable<LocationSuggestion>[] | Promise<Nullable<LocationSuggestion>[]>;
 
     abstract favorites(userId: string, pagination?: Nullable<PaginationInput>): FavoritesConnection | Promise<FavoritesConnection>;
+
+    abstract getPresignedDownloadUrl(key: string): string | Promise<string>;
 }
 
 export type DateTime = any;
