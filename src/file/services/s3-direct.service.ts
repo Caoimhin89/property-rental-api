@@ -1,14 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
-import { PresignedUrl, FileUploadInput } from '../graphql';
+import { PresignedUrl, FileUploadInput } from '../../graphql';
+import { LoggerService } from '../../common/services/logger.service';
 
 @Injectable()
-export class FileService {
+export class S3DirectService {
   private readonly s3Client: S3Client;
-  private readonly logger = new Logger(FileService.name);
+  private readonly logger = new LoggerService(S3DirectService.name);
 
   constructor(private readonly configService: ConfigService) {
     this.s3Client = new S3Client({
