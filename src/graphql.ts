@@ -1015,6 +1015,12 @@ export class SearchResultConnection {
     totalCount: number;
 }
 
+export class UploadResponse {
+    __typename?: 'UploadResponse';
+    key: string;
+    url: string;
+}
+
 export abstract class IMutation {
     __typename?: 'IMutation';
 
@@ -1101,6 +1107,8 @@ export abstract class IMutation {
     abstract getPresignedUploadUrl(input: FileUploadInput): PresignedUrl | Promise<PresignedUrl>;
 
     abstract deleteFile(key: string): boolean | Promise<boolean>;
+
+    abstract uploadFile(file: Upload, folder?: Nullable<string>): UploadResponse | Promise<UploadResponse>;
 }
 
 export abstract class IQuery {
@@ -1165,6 +1173,7 @@ export abstract class IQuery {
 
 export type DateTime = any;
 export type Money = any;
+export type Upload = any;
 export type PropertyResult = Property | Error;
 export type GeocodeResponse = GeocodeSuccessResponse | GeocodeErrorResponse;
 type Nullable<T> = T | null;

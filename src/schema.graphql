@@ -243,6 +243,7 @@ input FileUploadInput {
 # Scalar Types
 scalar DateTime
 scalar Money
+scalar Upload
 
 # Enum Types
 enum PropertyType {
@@ -1014,6 +1015,11 @@ input SearchFilter {
   minSimilarity: Float
 }
 
+type UploadResponse {
+  key: String!
+  url: String!
+}
+
 type Mutation {
   ## Auth Mutations
   login(input: LoginInput!): AuthResponse!
@@ -1084,6 +1090,7 @@ type Mutation {
   ## File Mutations
   getPresignedUploadUrl(input: FileUploadInput!): PresignedUrl!
   deleteFile(key: String!): Boolean!
+  uploadFile(file: Upload!, folder: String): UploadResponse!
 }
 
 # Query Types
