@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { LoggerService } from './common/services/logger.service';
+import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -35,6 +36,11 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
+  
+  app.use(graphqlUploadExpress({
+    maxFileSize: 10000000, // 10 MB
+    maxFiles: 5
+  }));
 
   await app.listen(3000);
   console.log(`Application is running on: ${await app.getUrl()}`);

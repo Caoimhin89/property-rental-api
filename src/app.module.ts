@@ -21,7 +21,7 @@ import { NotificationModule } from './notification/notification.module';
 import { CacheModule } from './cache/cache.module';
 import { EmailModule } from './email/email.module';
 import { LlmModule } from './llm/llm.module';
-import { FileModule } from './file/file.module';
+import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,6 +32,9 @@ import { FileModule } from './file/file.module';
       driver: ApolloDriver,
       typePaths: ['./src/schema.graphql'],
       installSubscriptionHandlers: true,
+      resolvers: {
+        Upload: GraphQLUpload,
+      },
     }),
     PropertyModule,
     AmenityModule,
@@ -51,7 +54,6 @@ import { FileModule } from './file/file.module';
     CacheModule,
     EmailModule,
     LlmModule,
-    FileModule,
   ],
 })
 export class AppModule {}
