@@ -9,7 +9,7 @@ import { PropertyModule } from '../property/property.module';
 import { UserModule } from '../user/user.module';
 import { forwardRef } from '@nestjs/common';
 import { LoggerService } from '../common/services/logger.service';
-
+import { CacheModule } from '../cache/cache.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -18,7 +18,8 @@ import { LoggerService } from '../common/services/logger.service';
       MaintenanceImage
     ]),
     forwardRef(() => PropertyModule),
-    forwardRef(() => UserModule)
+    forwardRef(() => UserModule),
+    CacheModule
   ],
   providers: [MaintenanceService, MaintenanceResolver, LoggerService],
   exports: [MaintenanceService]

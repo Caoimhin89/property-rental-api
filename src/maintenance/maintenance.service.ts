@@ -18,7 +18,9 @@ import { Connection } from '../common/types/types';
 import { buildPaginatedResponse } from '../common/utils';
 import { Property as PropertyEntity } from 'property/entities/property.entity';
 import { User as UserEntity } from 'user/entities/user.entity';
-
+import { CacheService } from '../cache/cache.service';
+import { CacheSetEvent } from 'cache/cache.events';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 @Injectable()
 export class MaintenanceService {
   constructor(
@@ -30,7 +32,9 @@ export class MaintenanceService {
     private maintenanceImageRepository: Repository<MaintenanceImage>,
     private propertyService: PropertyService,
     private userService: UserService,
-    private logger: LoggerService
+    private logger: LoggerService,
+    private cacheService: CacheService,
+    private eventEmitter: EventEmitter2
   ) {}
 
   async findById(id: string): Promise<MaintenanceRequest> {
@@ -39,6 +43,88 @@ export class MaintenanceService {
       throw new NotFoundException(`Maintenance request with ID ${id} not found`);
     }
     return request;
+  }
+
+  async findByPropertyId(
+    propertyId: string,
+    status?: MaintenanceRequestStatus,
+    pagination?: PaginationInput
+  ): Promise<Connection<MaintenanceRequest>> {
+    this.logger.debug('Finding maintenance requests', 'MaintenanceService', { propertyId, status, pagination });
+
+    // check cache
+    const cacheKey = this.cacheService.generateCacheKey('maintenance-requests', { propertyId, status, pagination });
+    const cachedResult = await this.cacheService.get('maintenance-requests', cacheKey);
+    if (cachedResult) {
+      return cachedResult as Connection<MaintenanceRequest>;
+    }
+
+    // Build base query
+    const query = this.maintenanceRequestRepository.createQueryBuilder('request')
+      .where('request.property_id = :propertyId', { propertyId });
+
+    // Add status filter if provided
+    if (status) {
+      query.andWhere('request.status = :status', { status });
+    }
+
+    // Handle pagination
+    const limit = pagination?.first || 10;
+    
+    if (pagination?.after) {
+      try {
+        const decodedCursor = fromCursor(pagination.after);
+        query.andWhere('request.created_at < :after', { after: decodedCursor });
+      } catch (error) {
+        this.logger.error('Invalid cursor format', 'MaintenanceService', JSON.stringify({ cursor: pagination.after }));
+        throw new Error('Invalid cursor format');
+      }
+    }
+
+    // Optimize ordering and add index hint
+    query
+      .orderBy('request.created_at', 'DESC')
+      .addOrderBy('request.id', 'DESC')  // Secondary sort for stability
+      .take(limit + 1);  // Take one extra to determine if there's a next page
+
+    // Add query hint for index usage
+    // query.setQueryBuilderOption('hints', ['USE INDEX (idx_maintenance_requests_property_created)']);
+
+    try {
+      const [items, totalCount] = await Promise.all([
+        query.getMany(),
+        query.getCount()
+      ]);
+
+      const hasNextPage = items.length > limit;
+      const edges = items.slice(0, limit).map(item => ({
+        node: item,
+        cursor: toCursor(item.createdAt.toISOString())
+      }));
+
+      const result = {
+        edges,
+        pageInfo: {
+          hasNextPage,
+          hasPreviousPage: !!pagination?.after,
+          startCursor: edges[0]?.cursor,
+          endCursor: edges[edges.length - 1]?.cursor
+        },
+        totalCount
+      };
+
+      // cache result
+      await this.eventEmitter.emit('cache.set', new CacheSetEvent(
+        'maintenance-requests',
+        cacheKey,
+        result
+      ));;
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to fetch maintenance requests', 'MaintenanceService', error);
+      throw error;
+    }
   }
 
   async findByUserId(userId: string, pagination?: PaginationInput): Promise<Connection<MaintenanceRequest>> {
@@ -247,4 +333,13 @@ export class MaintenanceService {
     };
   }
   
+}
+
+// Utility functions
+function toCursor(date: string): string {
+  return Buffer.from(date).toString('base64');
+}
+
+function fromCursor(cursor: string): Date {
+  return new Date(Buffer.from(cursor, 'base64').toString());
 }
