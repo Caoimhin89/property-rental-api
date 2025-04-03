@@ -8,6 +8,8 @@
 
 # misc
 npm-debug.log
+files/
+uploads/
 
 # example
 /quick-start
