@@ -22,6 +22,7 @@ import { CacheModule } from './cache/cache.module';
 import { EmailModule } from './email/email.module';
 import { LlmModule } from './llm/llm.module';
 import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
+import { FileModule } from './file/file.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -54,6 +55,7 @@ import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
     CacheModule,
     EmailModule,
     LlmModule,
+    FileModule,
   ],
 })
 export class AppModule {}
