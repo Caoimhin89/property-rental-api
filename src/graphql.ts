@@ -319,6 +319,12 @@ export class LocationSuggestionsInput {
 }
 
 export class FileUploadInput {
+    file: Upload;
+    folder?: Nullable<string>;
+    caption?: Nullable<string>;
+}
+
+export class PresignedUrlInput {
     fileName: string;
     contentType: string;
     folder?: Nullable<string>;
@@ -1104,11 +1110,11 @@ export abstract class IMutation {
 
     abstract generatePropertyDescription(propertyId: string, details: PropertyDescriptionInput): string | Promise<string>;
 
-    abstract getPresignedUploadUrl(input: FileUploadInput): PresignedUrl | Promise<PresignedUrl>;
+    abstract getPresignedUploadUrl(input: PresignedUrlInput): PresignedUrl | Promise<PresignedUrl>;
 
     abstract deleteFile(key: string): boolean | Promise<boolean>;
 
-    abstract uploadFile(file: Upload, folder?: Nullable<string>): UploadResponse | Promise<UploadResponse>;
+    abstract uploadFile(propertyId: string, input: FileUploadInput): UploadResponse | Promise<UploadResponse>;
 }
 
 export abstract class IQuery {

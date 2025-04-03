@@ -228,13 +228,19 @@ type LocationSuggestion {
   longitude: Float
 }
 
+input FileUploadInput {
+  file: Upload!
+  folder: String
+  caption: String
+}
+
 type PresignedUrl {
   url: String!
   key: String!
   expiresIn: Int!
 }
 
-input FileUploadInput {
+input PresignedUrlInput {
   fileName: String!
   contentType: String!
   folder: String
@@ -1088,9 +1094,9 @@ type Mutation {
   generatePropertyDescription(propertyId: ID!, details: PropertyDescriptionInput!): String!
 
   ## File Mutations
-  getPresignedUploadUrl(input: FileUploadInput!): PresignedUrl!
+  getPresignedUploadUrl(input: PresignedUrlInput!): PresignedUrl!
   deleteFile(key: String!): Boolean!
-  uploadFile(file: Upload!, folder: String): UploadResponse!
+  uploadFile(propertyId: ID!, input: FileUploadInput!): UploadResponse!
 }
 
 # Query Types
