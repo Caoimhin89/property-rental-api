@@ -15,7 +15,9 @@ import {
   CreateBlockedDateInput,
   BlockedDate,
   CreatePriceRuleInput,
-  PriceRule
+  PriceRule,
+  MaintenanceRequestStatus,
+  MaintenanceRequestConnection
 } from '../graphql';
 import { Property as PropertyEntity } from './entities/property.entity';
 import { BookingService } from '../booking/booking.service';
@@ -292,5 +294,18 @@ export class PropertyResolver {
     @Args('status', { nullable: true }) status?: BookingStatus,
     @Args('pagination', { nullable: true }) pagination?: PaginationInput) {
     return this.bookingService.findByPropertyId(property.id, status, pagination);
+  }
+
+  @ResolveField()
+  async maintenanceRequests(
+    @Parent() property: PropertyEntity,
+    @Args('status', { nullable: true }) status?: MaintenanceRequestStatus,
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput
+  ): Promise<MaintenanceRequestConnection> {
+    return this.dataLoader.maintenanceRequestsLoader.load({
+      propertyId: property.id,
+      status,
+      pagination
+    });
   }
 }
