@@ -7,10 +7,12 @@ import { FileStorageFactoryService } from './services/file-storage-factory.servi
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { S3DirectService } from './services/s3-direct.service';
+import { KafkaModule } from '../kafka/kafka.module';
 
 @Module({
   imports: [
     ConfigModule,
+    KafkaModule,
     MulterModule.register({
       storage: diskStorage({
         destination: './uploads',
