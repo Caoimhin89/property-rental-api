@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Image as ImageEntity } from './entities/image.entity';
-import { ImageConnection, PaginationInput, Image as ImageType } from '../graphql';
+import { PaginationInput, Image as ImageType } from '../graphql';
 import { toCursor } from '../common/utils';
 
 @Injectable()
@@ -85,8 +85,8 @@ export class ImageService {
   async create(propertyId: string, input: { url: string, caption?: string }): Promise<ImageEntity> {
     const image = this.imageRepository.create({
       url: input.url,
+      propertyId,
       ...(input.caption && { caption: input.caption }),
-      property: { id: propertyId },
       createdAt: new Date(),
     });
 
