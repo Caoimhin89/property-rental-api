@@ -22,6 +22,7 @@ import { PaginationInput } from '../graphql';
 import { MaintenanceService } from '../maintenance/maintenance.service';
 import { NearbyPlaceService } from '../nearby-place/nearby-place.service';
 import { Location } from 'location/entities/location.entity';
+import { MaintenanceRequestStatus } from '../maintenance/entities/maintenance-request.entity';
 @Injectable()
 export class DataLoaderService {
   [AMENITIES_LOADER]: DataLoader<string, any>;
@@ -56,6 +57,7 @@ export class DataLoaderService {
   [ORGANIZATION_KPIS_LOADER]: {
     load: (organizationId: string) => Promise<any>;
   };
+  maintenanceRequestsLoader: DataLoader<{ propertyId: string; status?: MaintenanceRequestStatus; pagination?: PaginationInput }, any>;
   
   constructor(
     private readonly amenityService: AmenityService,
@@ -66,7 +68,7 @@ export class DataLoaderService {
     private readonly locationService: LocationService,
     private readonly maintenanceService: MaintenanceService,
     private readonly nearbyPlaceService: NearbyPlaceService,
-    private readonly bookingService: BookingService
+    private readonly bookingService: BookingService,
   ) {
     this[AMENITIES_LOADER] = new DataLoader(
       (propertyIds: readonly string[]) => 
@@ -190,6 +192,17 @@ export class DataLoaderService {
         return kpis;
       }
     };
+
+    this.maintenanceRequestsLoader = new DataLoader(
+      async (keys: Array<{ propertyId: string; status?: MaintenanceRequestStatus; pagination?: PaginationInput }>) => {
+        const results = await Promise.all(
+          keys.map(({ propertyId, status, pagination }) =>
+            this.maintenanceService.findByPropertyId(propertyId, status, pagination)
+          )
+        );
+        return results;
+      }
+    );
 
   }
 
