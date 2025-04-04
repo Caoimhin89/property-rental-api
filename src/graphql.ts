@@ -1124,7 +1124,7 @@ export abstract class IQuery {
 
     abstract properties(filter?: Nullable<PropertyFilter>, pagination?: Nullable<PaginationInput>): Nullable<PropertyConnection> | Promise<Nullable<PropertyConnection>>;
 
-    abstract propertyAmenities(propertyId: string): Amenity[] | Promise<Amenity[]>;
+    abstract propertyAmenities(propertyId: string): Nullable<Amenity>[] | Promise<Nullable<Amenity>[]>;
 
     abstract propertyImages(propertyId: string): ImageConnection | Promise<ImageConnection>;
 

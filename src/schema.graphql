@@ -1106,7 +1106,7 @@ type Query {
     filter: PropertyFilter,
     pagination: PaginationInput
   ): PropertyConnection
-  propertyAmenities(propertyId: ID!): [Amenity!]!
+  propertyAmenities(propertyId: ID!): [Amenity]!
   propertyImages(propertyId: ID!): ImageConnection!
   propertyLocation(propertyId: ID!): Location
   propertyReviews(

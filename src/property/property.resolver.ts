@@ -17,7 +17,9 @@ import {
   CreatePriceRuleInput,
   PriceRule,
   MaintenanceRequestStatus,
-  MaintenanceRequestConnection
+  MaintenanceRequestConnection,
+  Amenity,
+  CreateAmenityInput
 } from '../graphql';
 import { Property as PropertyEntity } from './entities/property.entity';
 import { BookingService } from '../booking/booking.service';
@@ -134,7 +136,6 @@ export class PropertyResolver {
     return await this.propertyService.createPriceRules(propertyId, input);
   }
   
-  
   @Query(() => Property, { nullable: true })
   async propertyById(@Args('id') id: string) {
     return await this.propertyService.findById(id) as PropertyEntity | null;
@@ -178,6 +179,11 @@ export class PropertyResolver {
         node: this.propertyService.toGraphQL(edge.node)
       }))
     };
+  }
+
+  @Query(() => [Amenity])
+  async propertyAmenities(@Args('propertyId') propertyId: string) {
+    return this.dataLoader.amenitiesLoader.load(propertyId);
   }
 
   @ResolveField()

@@ -3,7 +3,8 @@ import { Inject, forwardRef } from '@nestjs/common';
 import { AmenityService } from './amenity.service';
 import { PropertyService } from '../property/property.service';
 import { Amenity } from './entities/amenity.entity';
-import { Property } from '../property/entities/property.entity';
+import { Property as PropertyEntity } from '../property/entities/property.entity';
+import { Property as PropertyType } from '../graphql';
 import { CreateAmenityInput, UpdateAmenityInput, PaginationInput, AmenityConnection } from '../graphql';
 
 @Resolver(() => Amenity)
@@ -57,24 +58,28 @@ export class AmenityResolver {
     return this.amenityService.remove(id);
   }
 
-  @Mutation(() => Property)
+  @Mutation(() => PropertyType)
   async addAmenityToProperty(
     @Args('propertyId') propertyId: string,
     @Args('amenityId') amenityId: string
-  ): Promise<Property> {
-    return this.amenityService.addToProperty(propertyId, amenityId);
+  ): Promise<PropertyType> {
+    const property: PropertyEntity = await this.amenityService.addToProperty(propertyId, amenityId);
+    console.log('property', property);
+    return this.propertyService.toGraphQL(property);
   }
 
-  @Mutation(() => Property)
+  @Mutation(() => PropertyType)
   async removeAmenityFromProperty(
     @Args('propertyId') propertyId: string,
     @Args('amenityId') amenityId: string
-  ): Promise<Property> {
-    return this.amenityService.removeFromProperty(propertyId, amenityId);
+  ): Promise<PropertyType> {
+    const property: PropertyEntity = await this.amenityService.removeFromProperty(propertyId, amenityId);
+    return this.propertyService.toGraphQL(property);
   }
 
-  @ResolveField(() => [Property])
-  async properties(@Parent() amenity: Amenity): Promise<Property[]> {
-    return this.propertyService.findByAmenityId(amenity.id);
+  @ResolveField(() => [PropertyType])
+  async properties(@Parent() amenity: Amenity): Promise<PropertyType[]> {
+    const properties: PropertyEntity[] = await this.propertyService.findByAmenityId(amenity.id);
+    return properties.map(property => this.propertyService.toGraphQL(property));
   }
 } 
