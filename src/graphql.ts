@@ -1082,7 +1082,7 @@ export abstract class IMutation {
 
     abstract confirmBooking(bookingId: string): Booking | Promise<Booking>;
 
-    abstract rejectBooking(bookingId: string): Booking | Promise<Booking>;
+    abstract rejectBooking(bookingId: string, reason?: Nullable<string>): Booking | Promise<Booking>;
 
     abstract cancelBooking(bookingId: string): Booking | Promise<Booking>;
 

@@ -469,8 +469,8 @@ export class BookingService {
     return this.changeBookingStatus(bookingId, 'confirm', user);
   }
 
-  async rejectBooking(bookingId: string, user: UserEntity): Promise<Booking> {
-    return this.changeBookingStatus(bookingId, 'reject', user);
+  async rejectBooking(bookingId: string, user: UserEntity, reason: string): Promise<Booking> {
+    return this.changeBookingStatus(bookingId, 'reject', user, reason);
   }
 
   async cancelBooking(bookingId: string, user: UserEntity): Promise<Booking> {
@@ -502,11 +502,12 @@ export class BookingService {
   private async changeBookingStatus(
     bookingId: string, 
     action: 'confirm' | 'reject' | 'cancel',
-    user: UserEntity
+    user: UserEntity,
+    reason?: string
   ): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({ 
       where: { id: bookingId }, 
-      relations: ['property'] 
+      relations: ['property', 'property.images'] 
     });
 
     if (!booking) {
@@ -518,7 +519,7 @@ export class BookingService {
       throw new Error(`User is not authorized to ${action} this booking`);
     }
 
-    return this.updateBookingStatus(action, bookingId, actionConfig.status, booking, user);
+    return this.updateBookingStatus(action, bookingId, actionConfig.status, booking, user, reason);
   }
   
   private async updateBookingStatus(
@@ -526,13 +527,14 @@ export class BookingService {
     bookingId: string, 
     status: BookingStatus, 
     booking: Booking,
-    user: UserEntity
+    user: UserEntity,
+    reason?: string
   ): Promise<Booking> {
     const bookingToUpdate = booking || await this.findBookingById(bookingId);
     bookingToUpdate.status = status;
     
     const updatedBooking = await this.bookingRepository.save(bookingToUpdate);
-    await this.emitBookingStatusUpdate(action, updatedBooking, user);
+    await this.emitBookingStatusUpdate(action, updatedBooking, user, reason);
     
     return updatedBooking;
   }
@@ -540,7 +542,9 @@ export class BookingService {
   private async emitBookingStatusUpdate(
     action: 'confirm' | 'reject' | 'cancel',
     booking: Booking,
-    user: UserEntity): Promise<void> {
+    user: UserEntity,
+    reason?: string
+  ): Promise<void> {
     await this.kafkaClient.emit(`booking.${action}`, {
       key: booking.id,
       value: {
@@ -548,7 +552,8 @@ export class BookingService {
           email: user.email,
           name: user.name,
         },
-        bookingDetails: booking
+        bookingDetails: booking,
+        reason
       },
       headers: {
         timestamp: new Date().toISOString(),

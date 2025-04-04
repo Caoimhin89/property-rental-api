@@ -82,8 +82,9 @@ export class BookingResolver {
   @Mutation(() => BookingType, { nullable: true })
   async rejectBooking(
     @Args('bookingId') bookingId: string,
+    @Args('reason') reason: string,
     @CurrentUser() user: User
   ): Promise<BookingType> {
-    return this.bookingService.rejectBooking(bookingId, user) as unknown as BookingType;
+    return this.bookingService.rejectBooking(bookingId, user, reason) as unknown as BookingType;
   }
 } 

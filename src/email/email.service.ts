@@ -193,7 +193,7 @@ export class EmailService implements OnModuleInit {
       guestName: user.name,
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
-      propertyImage: bookingDetails.property.imageUrl,
+      propertyImage: bookingDetails.property.images?.[0]?.url,
       checkInDate: formatDate(bookingDetails.startDate, this.locale),
       checkOutDate: formatDate(bookingDetails.endDate, this.locale),
       numberOfGuests: bookingDetails.numberOfGuests,
@@ -204,18 +204,18 @@ export class EmailService implements OnModuleInit {
     await this.sendEmail(user.email, 'Booking Confirmed!', html);
   }
 
-  async sendBookingRejected(user: {email: string, name: string}, bookingDetails: any): Promise<void> {
+  async sendBookingRejected(user: {email: string, name: string}, bookingDetails: any, reason?: string): Promise<void> {
     const html = await this.renderTemplate('bookingRejected', {
       recipientEmail: user.email,
       guestName: user.name,
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
-      propertyImage: bookingDetails.property.imageUrl,
+      propertyImage: bookingDetails.property.images?.[0]?.url,
       checkInDate: bookingDetails.startDate,
       checkOutDate: bookingDetails.endDate,
       numberOfGuests: bookingDetails.numberOfGuests,
       confirmationCode: bookingDetails.confirmationCode,
-      rejectionReason: bookingDetails.rejectionReason,
+      rejectionReason: reason || 'No reason provided',
       alternativeProperties: bookingDetails.alternativeProperties || [],
       searchUrl: `${process.env.SITE_URL}`,
     });
@@ -228,7 +228,7 @@ export class EmailService implements OnModuleInit {
       guestName: user.name,
       propertyName: bookingDetails.property.name,
       propertyAddress: bookingDetails.property.address,
-      propertyImage: bookingDetails.property.imageUrl,
+      propertyImage: bookingDetails.property.images?.[0]?.url,
       checkInDate: bookingDetails.startDate,
       checkOutDate: bookingDetails.endDate,
       numberOfGuests: bookingDetails.numberOfGuests,

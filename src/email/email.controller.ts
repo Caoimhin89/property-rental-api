@@ -34,9 +34,9 @@ export class EmailController {
   }
 
   @EventPattern('booking.reject')
-  async handleBookingRejected(@Payload() data: { user: {email: string, name: string}; bookingDetails: any }) {
+  async handleBookingRejected(@Payload() data: { user: {email: string, name: string}; bookingDetails: any, reason: string }) {
     this.logger.debug('Received booking rejection event', 'EmailController', data);
-    await this.emailService.sendBookingRejected(data.user, data.bookingDetails);
+    await this.emailService.sendBookingRejected(data.user, data.bookingDetails, data.reason);
   }
 
   @EventPattern('booking.cancel')

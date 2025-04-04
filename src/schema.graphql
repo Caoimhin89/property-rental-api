@@ -1070,7 +1070,7 @@ type Mutation {
   ## Booking Mutations
   createBooking(propertyId: ID!, input: CreateBookingInput!): BookingResponse!
   confirmBooking(bookingId: ID!): Booking!
-  rejectBooking(bookingId: ID!): Booking!
+  rejectBooking(bookingId: ID!, reason: String): Booking!
   cancelBooking(bookingId: ID!): Booking!
 
   ## Organization Mutations
