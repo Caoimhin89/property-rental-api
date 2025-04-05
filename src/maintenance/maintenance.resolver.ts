@@ -16,6 +16,8 @@ import {
     MaintenanceCommentConnection,
     MaintenanceImageConnection } from '../graphql';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { User as UserEntity } from '../user/entities/user.entity';
 
 @Resolver(() => MaintenanceRequestType)
 export class MaintenanceResolver {
@@ -40,9 +42,10 @@ export class MaintenanceResolver {
   @Mutation(() => MaintenanceRequestType)
   @UseGuards(JwtAuthGuard)
   async createMaintenanceRequest(
-    @Args('input') input: CreateMaintenanceRequestInput
+    @Args('input') input: CreateMaintenanceRequestInput,
+    @CurrentUser() user: UserEntity
   ) {
-    return this.maintenanceService.create(input);
+    return this.maintenanceService.create(user.id, input);
   }
 
   @Mutation(() => MaintenanceRequestType)
@@ -57,9 +60,10 @@ export class MaintenanceResolver {
   @Mutation(() => MaintenanceCommentType)
   @UseGuards(JwtAuthGuard)
   async addMaintenanceComment(
-    @Args('input') input: CreateMaintenanceCommentInput
+    @Args('input') input: CreateMaintenanceCommentInput,
+    @CurrentUser() user: UserEntity
   ) {
-    return this.maintenanceService.addComment(input);
+    return this.maintenanceService.addComment(user, input);
   }
 
   @Mutation(() => MaintenanceImageType)

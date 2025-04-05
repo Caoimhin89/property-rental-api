@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MaintenanceRequest, MaintenanceRequestStatus } from './entities/maintenance-request.entity';
@@ -12,10 +12,11 @@ import {
     CreateMaintenanceCommentInput,
     CreateMaintenanceImageInput,
     CreateMaintenanceRequestInput,
-    UpdateMaintenanceRequestInput
+    UpdateMaintenanceRequestInput,
+    OrganizationRole
 } from '../graphql';
 import { Connection } from '../common/types/types';
-import { buildPaginatedResponse } from '../common/utils';
+import { buildPaginatedResponse, userHasAccessToResource } from '../common/utils';
 import { Property as PropertyEntity } from 'property/entities/property.entity';
 import { User as UserEntity } from 'user/entities/user.entity';
 import { CacheService } from '../cache/cache.service';
@@ -34,7 +35,7 @@ export class MaintenanceService {
     private userService: UserService,
     private logger: LoggerService,
     private cacheService: CacheService,
-    private eventEmitter: EventEmitter2
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async findById(id: string): Promise<MaintenanceRequest> {
@@ -179,9 +180,10 @@ export class MaintenanceService {
     );
   }
 
-  async create(input: CreateMaintenanceRequestInput): Promise<MaintenanceRequest> {
+  async create(userId: string, input: CreateMaintenanceRequestInput): Promise<MaintenanceRequest> {
     const request = this.maintenanceRequestRepository.create({
       ...input,
+      userId,
       status: MaintenanceRequestStatus.PENDING
     });
     const savedRequest = await this.maintenanceRequestRepository.save(request);
@@ -207,9 +209,15 @@ export class MaintenanceService {
     return this.maintenanceRequestRepository.save(request);
   }
 
-  async addComment(input: CreateMaintenanceCommentInput): Promise<MaintenanceComment> {
+  async addComment(user: UserEntity, input: CreateMaintenanceCommentInput): Promise<MaintenanceComment> {
     const request = await this.findById(input.maintenanceRequestId);
-    const comment = this.maintenanceCommentRepository.create(input);
+    if (!(await userHasAccessToResource(user, request))) {
+      throw new ForbiddenException('You are not allowed to add a comment to this maintenance request');
+    }
+    const comment = this.maintenanceCommentRepository.create({
+      ...input,
+      userId: user.id
+    });
     return this.maintenanceCommentRepository.save(comment);
   }
 

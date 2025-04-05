@@ -3,7 +3,6 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { AuthResponse, LoginInput, SignupInput } from '../graphql';
 import * as bcrypt from 'bcrypt';
-
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);

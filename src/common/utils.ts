@@ -1,5 +1,7 @@
+import { UserRole } from "user/entities/user.entity";
 import { Connection } from "./types/types";
-
+import { OrganizationRole } from "../graphql";
+import { User as UserEntity } from "user/entities/user.entity";
 export function formatCurrency(amount: number, locale: string = 'en-US'): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -121,4 +123,19 @@ export function buildPaginatedResponse<T>(
     },
     totalCount
   };
+}
+
+export async function userHasAccessToResource(user: UserEntity, resource: any) {
+  if (user.role === UserRole.ADMIN) {
+    return true;
+  }
+  if (resource.userId === user.id) {
+    return true;
+  }
+  if (user.organizationMembership.role === OrganizationRole.OWNER || user.organizationMembership.role === OrganizationRole.MEMBER) {
+    if (resource.organizationId === user.organizationMembership.organizationId) {
+      return true;
+    }
+  }
+  return false;
 }
