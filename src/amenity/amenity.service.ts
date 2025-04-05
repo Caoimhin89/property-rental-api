@@ -6,7 +6,7 @@ import { Property as PropertyEntity } from '../property/entities/property.entity
 import { Amenity as AmenityType, PageInfo } from '../graphql';
 import { CreateAmenityInput, UpdateAmenityInput, PaginationInput } from '../graphql';
 import { toCursor } from 'common/utils';
-
+import { EventEmitter2 } from '@nestjs/event-emitter';
 interface AmenityEntityConnection {
   edges: {
     cursor: string;
@@ -23,6 +23,7 @@ export class AmenityService {
     private readonly amenityRepository: Repository<AmenityEntity>,
     @InjectRepository(PropertyEntity)
     private readonly propertyRepository: Repository<PropertyEntity>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findById(id: string): Promise<AmenityEntity | null> {
@@ -128,6 +129,9 @@ export class AmenityService {
       await this.propertyRepository.save(property);
     }
 
+    // Update the property in the cache
+    this.eventEmitter.emit('cache.set', 'property', property.id, property);
+
     return property;
   }
 
@@ -145,6 +149,9 @@ export class AmenityService {
       property.amenities = property.amenities.filter(a => a.id !== amenityId);
       await this.propertyRepository.save(property);
     }
+
+    // Update the property in the cache
+    this.eventEmitter.emit('cache.set', 'property', property.id, property);
 
     return property;
   }
