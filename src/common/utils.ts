@@ -136,6 +136,9 @@ export async function userHasAccessToResource(user: UserEntity, resource: any) {
     if (resource.organizationId === user.organizationMembership.organizationId) {
       return true;
     }
+    if (resource.property?.organizationId === user.organizationMembership.organizationId) {
+      return true;
+    }
   }
   return false;
 }

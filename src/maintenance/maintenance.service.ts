@@ -38,8 +38,8 @@ export class MaintenanceService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async findById(id: string): Promise<MaintenanceRequest> {
-    const request = await this.maintenanceRequestRepository.findOne({ where: { id } });
+  async findById(id: string, relations?: string[]): Promise<MaintenanceRequest> {
+    const request = await this.maintenanceRequestRepository.findOne({ where: { id }, relations });
     if (!request) {
       throw new NotFoundException(`Maintenance request with ID ${id} not found`);
     }
@@ -210,7 +210,7 @@ export class MaintenanceService {
   }
 
   async addComment(user: UserEntity, input: CreateMaintenanceCommentInput): Promise<MaintenanceComment> {
-    const request = await this.findById(input.maintenanceRequestId);
+    const request = await this.findById(input.maintenanceRequestId, ['property']);
     if (!(await userHasAccessToResource(user, request))) {
       throw new ForbiddenException('You are not allowed to add a comment to this maintenance request');
     }
