@@ -1160,3 +1160,23 @@ type Query {
   ): FavoritesConnection!
   getPresignedDownloadUrl(key: String!): String!
 }
+
+type Subscription {
+  maintenanceCommentAdded(
+    input: MaintenanceCommentSubscriptionInput!
+  ): MaintenanceComment!
+}
+
+enum MaintenanceCommentSubscriptionLevel {
+  REQUEST
+  PROPERTY
+  ORGANIZATION
+  USER
+}
+
+input MaintenanceCommentSubscriptionInput {
+  level: MaintenanceCommentSubscriptionLevel!
+  requestId: ID
+  propertyId: ID
+  organizationId: ID
+}

@@ -131,6 +131,13 @@ export enum SearchResultType {
     LOCATION = "LOCATION"
 }
 
+export enum MaintenanceCommentSubscriptionLevel {
+    REQUEST = "REQUEST",
+    PROPERTY = "PROPERTY",
+    ORGANIZATION = "ORGANIZATION",
+    USER = "USER"
+}
+
 export class LoginInput {
     email: string;
     password: string;
@@ -479,6 +486,13 @@ export class SearchFilter {
     propertyTypes?: Nullable<PropertyType[]>;
     priceRange?: Nullable<PriceFilter>;
     minSimilarity?: Nullable<number>;
+}
+
+export class MaintenanceCommentSubscriptionInput {
+    level: MaintenanceCommentSubscriptionLevel;
+    requestId?: Nullable<string>;
+    propertyId?: Nullable<string>;
+    organizationId?: Nullable<string>;
 }
 
 export class Error {
@@ -1175,6 +1189,12 @@ export abstract class IQuery {
     abstract favorites(userId: string, pagination?: Nullable<PaginationInput>): FavoritesConnection | Promise<FavoritesConnection>;
 
     abstract getPresignedDownloadUrl(key: string): string | Promise<string>;
+}
+
+export abstract class ISubscription {
+    __typename?: 'ISubscription';
+
+    abstract maintenanceCommentAdded(input: MaintenanceCommentSubscriptionInput): MaintenanceComment | Promise<MaintenanceComment>;
 }
 
 export type DateTime = any;
