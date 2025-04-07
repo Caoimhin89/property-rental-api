@@ -23,6 +23,7 @@ import { EmailModule } from './email/email.module';
 import { LlmModule } from './llm/llm.module';
 import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { FileModule } from './file/file.module';
+import { RedisPubSubModule } from './redis-pubsub/redis-pub-sub.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,6 +36,10 @@ import { FileModule } from './file/file.module';
       installSubscriptionHandlers: true,
       resolvers: {
         Upload: GraphQLUpload,
+      },
+      subscriptions: {
+        'graphql-ws': true,
+        'subscriptions-transport-ws': true
       },
     }),
     PropertyModule,
@@ -56,6 +61,7 @@ import { FileModule } from './file/file.module';
     EmailModule,
     LlmModule,
     FileModule,
+    RedisPubSubModule,
   ],
 })
 export class AppModule {}
