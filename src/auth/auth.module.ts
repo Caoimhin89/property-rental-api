@@ -19,6 +19,6 @@ import { DataLoaderModule } from '../data-loader/data-loader.module';
     forwardRef(() => DataLoaderModule),
   ],
   providers: [AuthService, AuthResolver, JwtStrategy, JwtAuthGuard],
-  exports: [JwtAuthGuard],
+  exports: [JwtAuthGuard, JwtStrategy],
 })
 export class AuthModule {} 

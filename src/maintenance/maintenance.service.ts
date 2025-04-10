@@ -22,6 +22,7 @@ import { User as UserEntity } from 'user/entities/user.entity';
 import { CacheService } from '../cache/cache.service';
 import { CacheSetEvent } from 'cache/cache.events';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EVENTS } from 'event-processor/events/event-processor.events';
 @Injectable()
 export class MaintenanceService {
   constructor(
@@ -216,6 +217,13 @@ export class MaintenanceService {
     }
     const comment = this.maintenanceCommentRepository.create({
       ...input,
+      userId: user.id
+    });
+
+    this.logger.log('Adding comment', JSON.stringify({ comment, requestId: input.maintenanceRequestId, userId: user.id }));
+    this.eventEmitter.emit(EVENTS.MAINTENANCE_COMMENT_CREATE, {
+      comment,
+      requestId: input.maintenanceRequestId,
       userId: user.id
     });
     return this.maintenanceCommentRepository.save(comment);

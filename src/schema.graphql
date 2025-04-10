@@ -1164,7 +1164,7 @@ type Query {
 type Subscription {
   maintenanceCommentAdded(
     input: MaintenanceCommentSubscriptionInput!
-  ): MaintenanceComment!
+  ): MaintenanceComment
 }
 
 enum MaintenanceCommentSubscriptionLevel {

@@ -1194,7 +1194,7 @@ export abstract class IQuery {
 export abstract class ISubscription {
     __typename?: 'ISubscription';
 
-    abstract maintenanceCommentAdded(input: MaintenanceCommentSubscriptionInput): MaintenanceComment | Promise<MaintenanceComment>;
+    abstract maintenanceCommentAdded(input: MaintenanceCommentSubscriptionInput): Nullable<MaintenanceComment> | Promise<Nullable<MaintenanceComment>>;
 }
 
 export type DateTime = any;
