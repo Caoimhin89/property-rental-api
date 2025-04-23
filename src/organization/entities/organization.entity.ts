@@ -24,6 +24,16 @@ export class Organization {
   })
   organizationType: OrganizationType;
 
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column({ type: 'date', nullable: true })
+  foundedDate: Date;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  imageUrl: string;
+  
+
   @OneToMany(() => OrganizationMember, (member: OrganizationMember) => member.organization)
   members: OrganizationMember[];
 

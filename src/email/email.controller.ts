@@ -11,6 +11,16 @@ export class EmailController {
     private readonly logger: LoggerService,
   ) {}
 
+  @EventPattern('organization.invitation')
+  async handleOrganizationInvitation(@Payload() data: { email: string; userName: string; verificationCode: string; verificationUrl: string }) {
+    this.logger.debug('Received organization invitation event', 'EmailController', data);
+    await this.emailService.sendOrganizationInvitation(data.email, {
+      userName: data.userName,
+      verificationCode: data.verificationCode,
+      verificationUrl: data.verificationUrl
+    });
+  }
+
   @EventPattern('user.registered')
   async handleUserRegistration(@Payload() data: { email: string; userName: string; verificationCode: string; verificationUrl: string }) {
     this.logger.debug('Received user registration event', 'EmailController', data);

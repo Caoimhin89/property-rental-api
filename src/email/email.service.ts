@@ -7,6 +7,7 @@ import juice from 'juice';
 import { LoggerService } from '../common/services/logger.service';
 import { User as UserEntity } from '../user/entities/user.entity';
 import { Property as PropertyEntity } from 'property/entities/property.entity';
+import { Organization as OrganizationEntity } from 'organization/entities/organization.entity';
 import { formatCurrency, formatDate } from 'common/utils';
 import { join } from 'path';
 import { readFileSync } from 'fs';
@@ -237,5 +238,29 @@ export class EmailService implements OnModuleInit {
       searchUrl: `${process.env.SITE_URL}`,
     });
     await this.sendEmail(user.email, 'Booking Cancelled', html);
+  }
+
+  async sendOrganizationInvitation(email: string, data: {
+    organization: OrganizationEntity;
+    owner: UserEntity;
+    inviter: UserEntity;
+    verificationUrl: string;
+  }): Promise<void> {
+    const html = await this.renderTemplate('organizationInvitation', {
+      organizationName: data.organization.name,
+      organizationImageUrl: data.organization.imageUrl,
+      organizationType: data.organization.organizationType,
+      organizationDescription: data.organization.description,
+      memberCount: data.organization.members.length,
+      propertyCount: data.organization.properties.length,
+      foundedDate: data.organization.foundedDate,
+      ownerName: data.owner.name,
+      ownerEmail: data.owner.email,
+      ownerTitle: 'Owner',
+      ownerAvatarUrl: data.owner.avatar,
+      inviterName: data.inviter.name,
+      acceptInviteUrl: data.verificationUrl,
+    });
+    await this.sendEmail(email, 'Organization Invitation', html);
   }
 }
