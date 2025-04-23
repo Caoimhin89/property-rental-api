@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join {{organizationName}}</title>
+    <link rel="stylesheet" href="base.css">
+</head>
+<body>
+    <div class="container">
+        <div class="email-wrapper">
+            <div class="header">
+                <img src="{{logoUrl}}" alt="Property Pursuit" class="logo">
+                <h1 style="color: #111827; font-size: 24px; font-weight: 700;">You're Invited to Join {{organizationName}}</h1>
+            </div>
+            
+            <div class="content">
+                <p class="mb-4">Dear {{recipientName}},</p>
+                
+                <p class="mb-4">{{inviterName}} has invited you to join their organization on Property Pursuit.</p>
+
+                <div class="info-box mb-4">
+                    <h2 class="text-lg font-bold mb-4">Organization Details</h2>
+                    
+                    <!-- Organization Image -->
+                    <img src="{{organizationImageUrl}}" alt="{{organizationName}}" class="property-image">
+                    
+                    <div class="mb-4">
+                        <p class="font-bold mb-2">{{organizationName}}</p>
+                        <p class="text-sm text-gray">{{organizationType}}</p>
+                        <p class="text-sm">{{organizationDescription}}</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Organization Stats -->
+                    <div class="mb-4">
+                        <p class="text-sm"><strong>Members:</strong> {{memberCount}}</p>
+                        <p class="text-sm"><strong>Properties:</strong> {{propertyCount}}</p>
+                        <p class="text-sm"><strong>Founded:</strong> {{foundedDate}}</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Organization Owner Info -->
+                    <div class="mb-2">
+                        <h3 class="font-bold mb-2">Organization Owner</h3>
+                        <div style="display: flex; align-items: center;">
+                            <img src="{{ownerAvatarUrl}}" alt="{{ownerName}}" 
+                                 style="width: 48px; height: 48px; border-radius: 50%; margin-right: 12px;">
+                            <div>
+                                <p class="font-bold">{{ownerName}}</p>
+                                <p class="text-sm text-gray">{{ownerTitle}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="mb-4">Click the button below to accept the invitation and join {{organizationName}}:</p>
+
+                <a href="{{acceptInviteUrl}}" class="button">Accept Invitation</a>
+
+                <div class="info-box mt-4">
+                    <h3 class="font-bold mb-2">As a Member, You'll Be Able To:</h3>
+                    <ul style="margin-left: 20px; margin-bottom: 16px;">
+                        <li>Access organization properties</li>
+                        <li>Manage maintenance requests</li>
+                        <li>Collaborate with team members</li>
+                        <li>View organization analytics</li>
+                    </ul>
+                </div>
+
+                <p class="text-sm text-gray mt-4">
+                    This invitation will expire in 7 days. If you believe this invitation was sent in error, 
+                    please ignore this email or contact our support team.
+                </p>
+            </div>
+
+            <div class="footer">
+                <p>© {{currentYear}} Property Pursuit. All rights reserved.</p>
+                <p class="text-sm mt-2">This email was sent to {{recipientEmail}}.</p>
+                <p class="text-sm mt-2">
+                    <a href="{{privacyUrl}}" style="color: #6B7280; text-decoration: underline;">Privacy Policy</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
